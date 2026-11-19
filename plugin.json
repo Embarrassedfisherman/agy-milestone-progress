@@ -1,0 +1,6 @@
+{
+  "name": "milestone-progress",
+  "displayName": "Milestone Progress",
+  "description": "智能分阶段里程碑汇报规则、实时聊天正文进度播报、静默防黑盒提醒、单回合防跑偏硬刹车与 macOS 桌面完成通知。",
+  "version": "1.0.3"
+}
