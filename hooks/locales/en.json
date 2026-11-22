@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "code": "en",
+    "name": "English"
+  },
+  "tool_labels": {
+    "read_file": "📖 Read",
+    "view_file": "📖 View",
+    "view_file_outline": "📖 Outline",
+    "view_code_item": "📖 Inspect symbol",
+    "write_file": "✏️ Write",
+    "write_to_file": "✏️ Write",
+    "edit_file": "✏️ Edit",
+    "replace_file_content": "✏️ Edit",
+    "multi_replace_file_content": "✏️ Multi-edit",
+    "run_command": "⚙️ Run",
+    "command_status": "⚙️ Check command",
+    "send_command_input": "⚙️ Send input",
+    "manage_task": "⚙️ Manage task",
+    "grep_search": "🔍 Search code",
+    "find_by_name": "🔍 Find files",
+    "list_dir": "🔍 Browse dir",
+    "codebase_search": "🔍 Semantic search",
+    "search_web": "🌐 Search web",
+    "read_url_content": "🌐 Read web page",
+    "invoke_subagent": "🤝 Launch subagent",
+    "send_message": "🤝 Message agent",
+    "manage_subagents": "🤝 Manage subagents",
+    "define_subagent": "🤝 Define subagent",
+    "swarm": "🤝 Coordinate swarm",
+    "run_workflow": "🤝 Run workflow",
+    "schedule": "⏰ Schedule task",
+    "call_mcp_tool": "🔌 Call MCP tool",
+    "list_resources": "🔌 List MCP resources",
+    "read_resource": "🔌 Read MCP resource",
+    "search_marketplace": "🧩 Search marketplace",
+    "list_plugin_accounts": "🧩 Check plugin accounts",
+    "ask_question": "❓ Ask user"
+  },
+  "labels": {
+    "browser_action": "🖥️ Browser action",
+    "generic_tool": "🔧 {name}",
+    "fallback_tool_name": "tool call",
+    "artifact_update": "📋 Update progress checklist",
+    "error_suffix": " (failed)",
+    "more_steps_prefix": "after {extra} earlier steps → ",
+    "default_session": "Current session"
+  },
+  "messages": {
+    "progress_guardian": "[Progress Guardian] This turn has already executed {inv_count} consecutive model invocations. Do not keep chaining tool calls indefinitely. Wrap up the current submodule at a safe boundary, update task.md (if present), output a plain-language milestone progress card in the user's language (overall progress, completed work, verification status, next milestone), and pause for user confirmation.",
+    "progress_reminder": "[Progress Reminder] You have run {interval} consecutive silent tool-calling invocations ({elapsed} elapsed; recent actions: {summary}). If you need to invoke more tools, first output one concise status sentence in visible response text (not inside thinking) in the user's language (e.g., `🧭 ...`) so the user can follow progress in real time.",
+    "notify_title": "Antigravity · {project}",
+    "notify_subtitle_error": "⚠️ Task paused due to error or limit",
+    "notify_subtitle_done": "⏸️ Milestone ready · Review & confirm",
+    "notify_body": "{tool_count} tool calls in {elapsed}."
+  }
+}

@@ -2,7 +2,9 @@
 
 - **复盘日期**：2026-11-18（`v1.0.3` 工程加固更新于 2026-11-20）
 - **适用环境**：Antigravity 2.0 Desktop App（macOS 完整支持，Linux/Windows 核心功能兼容）
-- **沉淀产物**：全局插件 `milestone-progress`（`v1.0.3`）
+- **沉淀产物**：全局插件 `milestone-progress`
+
+> **文档分工说明（自 `v1.1.0` 起）**：本文档保留项目早期（`v1.0.0`–`v1.0.3`）的设计决策与避坑复盘；后续持续迭代记录已迁移至结构化运维台账：[CHANGELOG.zh-CN.md](../CHANGELOG.zh-CN.md)（版本变更）、[BUG_LOG.md](./BUG_LOG.md)（Bug 与上游缺陷编号台账）、[COMPATIBILITY.md](./COMPATIBILITY.md)（Antigravity 客户端兼容矩阵）及 [RELEASE_PROCESS.md](./RELEASE_PROCESS.md)（发版 SOP）。
 
 ---
 

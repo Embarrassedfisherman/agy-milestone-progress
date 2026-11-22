@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Unit tests for the milestone-progress Antigravity hook (v1.0.3)."""
+"""Unit tests for the milestone-progress Antigravity lifecycle hook."""
 
 from __future__ import annotations
 
@@ -25,7 +25,8 @@ import progress_hook  # noqa: E402
 class ProgressHookTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp_dir = tempfile.TemporaryDirectory()
-        self.env_patch = mock.patch.dict(os.environ, {"PLUGIN_DATA": self.tmp_dir.name})
+        clean_env = {"PLUGIN_DATA": self.tmp_dir.name, "MILESTONE_PROGRESS_LANG": ""}
+        self.env_patch = mock.patch.dict(os.environ, clean_env, clear=False)
         self.env_patch.start()
         self.conv_id = "conv-test-001"
         self.transcript_file = Path(self.tmp_dir.name) / "transcript.jsonl"
@@ -57,7 +58,7 @@ class ProgressHookTests(unittest.TestCase):
         res = self._event("PreInvocation", 101.0, invocationNum=1)
         self.assertEqual(res, {"injectSteps": []})
 
-        with mock.patch.object(progress_hook, "_send_macos_notification") as notify_mock:
+        with mock.patch.object(progress_hook, "_send_desktop_notification") as notify_mock:
             stop_res = self._event("Stop", 103.0, terminationReason="NO_TOOL_CALL")
         self.assertEqual(stop_res, {"decision": "allow"})
         notify_mock.assert_not_called()
@@ -127,7 +128,7 @@ class ProgressHookTests(unittest.TestCase):
                 toolCall={"name": "read_file", "args": {"Path": f"/repo/f{i}.py"}},
             )
 
-        with mock.patch.object(progress_hook, "_send_macos_notification") as notify_mock:
+        with mock.patch.object(progress_hook, "_send_desktop_notification") as notify_mock:
             self._event("Stop", 320.0, terminationReason="NO_TOOL_CALL")
         notify_mock.assert_called_once()
         title, subtitle, body = notify_mock.call_args.args
@@ -136,7 +137,7 @@ class ProgressHookTests(unittest.TestCase):
         self.assertIn("3 次操作", body)
 
         self._event("PreInvocation", 400.0, invocationNum=1, initialNumSteps=20)
-        with mock.patch.object(progress_hook, "_send_macos_notification") as notify_mock:
+        with mock.patch.object(progress_hook, "_send_desktop_notification") as notify_mock:
             self._event("Stop", 430.0, terminationReason="USER_CANCELED")
         notify_mock.assert_not_called()
 
@@ -172,7 +173,7 @@ class ProgressHookTests(unittest.TestCase):
 
     def test_cli_entrypoint_and_json_configs(self) -> None:
         plugin_data = json.loads(PLUGIN_JSON_PATH.read_text(encoding="utf-8"))
-        self.assertEqual(plugin_data["version"], "1.0.3")
+        self.assertRegex(plugin_data["version"], r"^\d+\.\d+\.\d+$")
 
         hooks_data = json.loads(HOOKS_JSON_PATH.read_text(encoding="utf-8"))
         spec = hooks_data["milestone-progress"]
@@ -225,13 +226,11 @@ class ProgressHookTests(unittest.TestCase):
         self._event("SessionStart", 800.0)
         self.assertEqual(self._event("PreInvocation", 800.0), {"injectSteps": []})
 
-        # Two silent rounds first
         for idx in range(1, 3):
             self._append_planner_step("")
             self._event("PostToolUse", 800.0 + idx, toolCall={"name": "read_file", "args": {"Path": f"/repo/s{idx}.py"}})
             self.assertEqual(self._event("PreInvocation", 800.5 + idx, invocationNum=idx), {"injectSteps": []})
 
-        # Third round has visible narration, followed by >64KB of tool output steps across chunk boundaries
         self._append_planner_step("📖 正在读取大日志文件并校验结果…")
         with self.transcript_file.open("a", encoding="utf-8") as fh:
             for idx in range(8):
@@ -247,7 +246,6 @@ class ProgressHookTests(unittest.TestCase):
         state = progress_hook._load_state(self.conv_id)
         self.assertEqual(state["silent_invocations"], 0)
 
-        # Single >40KB PLANNER_RESPONSE line split across chunk boundary
         big_planner = {
             "type": "PLANNER_RESPONSE",
             "thinking": "t" * 45000,
@@ -276,6 +274,173 @@ class ProgressHookTests(unittest.TestCase):
         self.assertFalse(stale_lock.exists())
         self.assertTrue(fresh_json.exists())
         self.assertTrue(progress_hook._state_path(self.conv_id).exists())
+
+    def test_english_and_japanese_auto_detection_end_to_end(self) -> None:
+        # English session
+        en_conv = "conv-en-001"
+        self._event("SessionStart", 900.0, conversationId=en_conv, lastUserInput="Build the billing API")
+        self._event("PreInvocation", 900.0, conversationId=en_conv, lastUserInput="Build the billing API")
+        for idx in range(1, 4):
+            self._append_planner_step("")
+            self._event(
+                "PostToolUse",
+                900.0 + idx,
+                conversationId=en_conv,
+                lastUserInput="Build the billing API",
+                toolCall={"name": "edit_file", "args": {"Path": f"/repo/m{idx}.py"}},
+            )
+            res = self._event(
+                "PreInvocation",
+                900.5 + idx,
+                conversationId=en_conv,
+                lastUserInput="Build the billing API",
+                invocationNum=idx,
+            )
+        msg_en = res["injectSteps"][0]["systemMessage"]["systemMessage"]
+        self.assertIn("✏️ Edit `m3.py`", msg_en)
+        self.assertIn("in the user's language", msg_en)
+
+        with mock.patch.object(progress_hook, "_send_desktop_notification") as notify_mock:
+            self._event(
+                "Stop",
+                920.0,
+                conversationId=en_conv,
+                lastUserInput="",  # Verify language persists from session state
+                terminationReason="NO_TOOL_CALL",
+            )
+        notify_mock.assert_called_once()
+        _, subtitle_en, body_en = notify_mock.call_args.args
+        self.assertIn("Milestone ready", subtitle_en)
+        self.assertIn("3 tool calls", body_en)
+
+        # Japanese session (mixed Kanji + Kana)
+        ja_conv = "conv-ja-001"
+        self._event("SessionStart", 950.0, conversationId=ja_conv, lastUserInput="課金モジュールをリファクタリング")
+        self._event("PreInvocation", 950.0, conversationId=ja_conv, lastUserInput="課金モジュールをリファクタリング")
+        with mock.patch.object(progress_hook, "_send_desktop_notification") as notify_ja:
+            self._event(
+                "Stop",
+                970.0,
+                conversationId=ja_conv,
+                lastUserInput="",
+                terminationReason="NO_TOOL_CALL",
+            )
+        notify_ja.assert_called_once()
+        _, subtitle_ja, body_ja = notify_ja.call_args.args
+        self.assertIn("マイルストーン完了", subtitle_ja)
+        self.assertIn("回の操作", body_ja)
+
+    def test_agy_234_native_tool_labels_and_details(self) -> None:
+        cases = [
+            ({"name": "manage_task", "args": {"Action": "status"}}, "exec", "⚙️ Manage task `status`"),
+            ({"name": "manage_subagents", "args": {"Action": "list"}}, "agent", "🤝 Manage subagents"),
+            ({"name": "define_subagent", "args": {"Name": "auditor"}}, "agent", "🤝 Define subagent"),
+            ({"name": "schedule", "args": {"CronExpression": "*/5 * * * *"}}, "schedule", "⏰ Schedule task `*/5 * * * *`"),
+            ({"name": "schedule", "args": {"DurationSeconds": 90}}, "schedule", "⏰ Schedule task `90s`"),
+            ({"name": "call_mcp_tool", "args": {"ToolName": "query_docs"}}, "mcp", "🔌 Call MCP tool `query_docs`"),
+            ({"name": "list_resources", "args": {"ServerName": "cf"}}, "mcp", "🔌 List MCP resources"),
+            ({"name": "read_resource", "args": {"Uri": "docs://1"}}, "mcp", "🔌 Read MCP resource"),
+            ({"name": "search_marketplace", "args": {"queries": ["figma"]}}, "plugin", "🧩 Search marketplace `figma`"),
+            ({"name": "list_plugin_accounts", "args": {}}, "plugin", "🧩 Check plugin accounts"),
+        ]
+        for tool_call, expected_cat, expected_label in cases:
+            cat, label = progress_hook._describe_tool(tool_call, "", "", "en")
+            self.assertEqual(cat, expected_cat)
+            self.assertEqual(label, expected_label)
+
+    def test_stop_detects_nonempty_error_field_with_new_termination_reasons(self) -> None:
+        self._event("SessionStart", 1000.0, lastUserInput="Run quick check")
+        self._event("PreInvocation", 1000.0, lastUserInput="Run quick check")
+        with mock.patch.object(progress_hook, "_send_desktop_notification") as notify_mock:
+            self._event(
+                "Stop",
+                1001.0,
+                lastUserInput="Run quick check",
+                terminationReason="TERMINAL_CUSTOM_HOOK",
+                error="blocked by safety hook",
+                continuationActive=False,
+            )
+        notify_mock.assert_called_once()
+        _, subtitle, _ = notify_mock.call_args.args
+        self.assertIn("error or limit", subtitle)
+
+    def test_persistent_user_config_overrides_and_invalid_config_fallback(self) -> None:
+        config_path = Path(self.tmp_dir.name) / "config.json"
+
+        # 1. Valid user overrides
+        config_path.write_text(
+            json.dumps(
+                {
+                    "language": "en",
+                    "silent_nudge_interval": 1,
+                    "safeguard_first_invocation": 4,
+                    "safeguard_repeat_interval": 2,
+                    "notify_enabled": False,
+                    "notify_min_tools": 1,
+                    "state_retention_days": 7,
+                }
+            ),
+            encoding="utf-8",
+        )
+        cfg = progress_hook._load_user_config()
+        self.assertEqual(cfg["language"], "en")
+        self.assertEqual(cfg["silent_nudge_interval"], 1)
+        self.assertEqual(cfg["safeguard_first_invocation"], 4)
+        self.assertEqual(cfg["safeguard_repeat_interval"], 2)
+        self.assertFalse(cfg["notify_enabled"])
+        self.assertEqual(cfg["state_retention_sec"], 7 * 24 * 3600)
+
+        # Verify Chinese prompt respects explicit config language="en" and interval=1
+        self._event("SessionStart", 1100.0)
+        self._event("PreInvocation", 1100.0)
+        self._append_planner_step("")
+        self._event("PostToolUse", 1101.0, toolCall={"name": "edit_file", "args": {"Path": "/x/app.py"}})
+        res = self._event("PreInvocation", 1102.0, invocationNum=1)
+        self.assertEqual(len(res["injectSteps"]), 1)
+        self.assertIn("✏️ Edit `app.py`", res["injectSteps"][0]["systemMessage"]["systemMessage"])
+
+        # Verify notify_enabled=False suppresses even error notifications
+        with mock.patch.object(progress_hook, "_send_desktop_notification") as notify_mock:
+            self._event("Stop", 1130.0, terminationReason="ERROR")
+        notify_mock.assert_not_called()
+
+        # 2. Malformed JSON and invalid types safely fall back to defaults
+        config_path.write_text("{not valid json", encoding="utf-8")
+        cfg_bad = progress_hook._load_user_config()
+        self.assertEqual(cfg_bad["silent_nudge_interval"], progress_hook.SILENT_NUDGE_INTERVAL)
+        self.assertTrue(cfg_bad["notify_enabled"])
+
+        config_path.write_text(
+            json.dumps(
+                {
+                    "silent_nudge_interval": True,  # bool must not be accepted as int
+                    "safeguard_first_invocation": 0,  # below minimum 1
+                    "notify_min_elapsed_sec": -5,  # below minimum 0
+                    "notify_enabled": "yes",  # non-bool ignored
+                    "state_retention_days": False,
+                }
+            ),
+            encoding="utf-8",
+        )
+        cfg_types = progress_hook._load_user_config()
+        self.assertEqual(cfg_types["silent_nudge_interval"], progress_hook.SILENT_NUDGE_INTERVAL)
+        self.assertEqual(cfg_types["safeguard_first_invocation"], progress_hook.SAFEGUARD_FIRST_INVOCATION)
+        self.assertEqual(cfg_types["notify_min_elapsed_sec"], progress_hook.NOTIFY_MIN_ELAPSED_SEC)
+        self.assertTrue(cfg_types["notify_enabled"])
+        self.assertEqual(cfg_types["state_retention_sec"], progress_hook.STATE_RETENTION_SEC)
+
+    def test_linux_notify_send_dispatch_and_graceful_noop(self) -> None:
+        with mock.patch.object(progress_hook.sys, "platform", "linux"):
+            with mock.patch.object(progress_hook.shutil, "which", return_value="/usr/bin/notify-send"):
+                with mock.patch.object(progress_hook.subprocess, "run") as run_mock:
+                    progress_hook._send_desktop_notification("Title", "Sub", "Body")
+                run_mock.assert_called_once()
+                self.assertEqual(run_mock.call_args.args[0][0], "/usr/bin/notify-send")
+
+            with mock.patch.object(progress_hook.shutil, "which", return_value=None):
+                with mock.patch.object(progress_hook.subprocess, "run") as run_mock:
+                    progress_hook._send_desktop_notification("Title", "Sub", "Body")
+                run_mock.assert_not_called()
 
 
 if __name__ == "__main__":

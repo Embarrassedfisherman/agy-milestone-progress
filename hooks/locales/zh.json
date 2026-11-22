@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "code": "zh",
+    "name": "简体中文"
+  },
+  "tool_labels": {
+    "read_file": "📖 读取",
+    "view_file": "📖 查看",
+    "view_file_outline": "📖 查看结构",
+    "view_code_item": "📖 查看符号",
+    "write_file": "✏️ 写入",
+    "write_to_file": "✏️ 写入",
+    "edit_file": "✏️ 修改",
+    "replace_file_content": "✏️ 修改",
+    "multi_replace_file_content": "✏️ 批量修改",
+    "run_command": "⚙️ 执行",
+    "command_status": "⚙️ 检查命令",
+    "send_command_input": "⚙️ 命令交互",
+    "manage_task": "⚙️ 管理任务",
+    "grep_search": "🔍 搜索代码",
+    "find_by_name": "🔍 查找文件",
+    "list_dir": "🔍 浏览目录",
+    "codebase_search": "🔍 语义检索",
+    "search_web": "🌐 搜索网页",
+    "read_url_content": "🌐 读取网页",
+    "invoke_subagent": "🤝 启动子代理",
+    "send_message": "🤝 联系子代理",
+    "manage_subagents": "🤝 管理子代理",
+    "define_subagent": "🤝 定义子代理",
+    "swarm": "🤝 协同 Swarm",
+    "run_workflow": "🤝 执行工作流",
+    "schedule": "⏰ 定时调度",
+    "call_mcp_tool": "🔌 调用 MCP",
+    "list_resources": "🔌 查看 MCP 资源",
+    "read_resource": "🔌 读取 MCP 资源",
+    "search_marketplace": "🧩 搜索插件市场",
+    "list_plugin_accounts": "🧩 检查插件账号",
+    "ask_question": "❓ 等待用户选择"
+  },
+  "labels": {
+    "browser_action": "🖥️ 浏览器操作",
+    "generic_tool": "🔧 {name}",
+    "fallback_tool_name": "工具调用",
+    "artifact_update": "📋 更新进度清单",
+    "error_suffix": "（出错）",
+    "more_steps_prefix": "等前 {extra} 步后 → ",
+    "default_session": "当前会话"
+  },
+  "messages": {
+    "progress_guardian": "[Progress Guardian] 本回合已连续执行 {inv_count} 轮模型调用。请不要继续无休止链式调用工具。请立即在当前安全边界收尾本子模块，更新 task.md（如有）进度清单，并用与用户一致的语言输出通俗易懂的阶段进度汇报卡片（总进度、本阶段已完成、验证情况、下一步计划），然后暂停等待用户确认。",
+    "progress_reminder": "[Progress Reminder] 你已连续 {interval} 轮静默调用工具（已耗时 {elapsed}，近期操作：{summary}）。如果接下来仍需调用工具，请务必在本次调用工具之前，先在正文（非 thinking）中用用户当前语言输出简短的一句话进度（如 `🧭 正在…`），让用户在聊天界面实时看清进展。",
+    "notify_title": "Antigravity · {project}",
+    "notify_subtitle_error": "⚠️ 任务异常或达到上限已暂停",
+    "notify_subtitle_done": "⏸️ 阶段完成 · 请查看汇报或确认",
+    "notify_body": "累计 {tool_count} 次操作，耗时 {elapsed}。"
+  }
+}

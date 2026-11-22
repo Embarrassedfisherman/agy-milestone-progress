@@ -1,6 +1,21 @@
 {
   "name": "milestone-progress",
   "displayName": "Milestone Progress",
-  "description": "智能分阶段里程碑汇报规则、实时聊天正文进度播报、静默防黑盒提醒、单回合防跑偏硬刹车与 macOS 桌面完成通知。",
-  "version": "1.0.3"
+  "version": "1.1.0",
+  "description": "Smart phased milestone checkpoints, live inline progress narration, silent-loop guardrails, and completion notifications for Antigravity (multilingual).",
+  "logo": "assets/logo.svg",
+  "suggestedPrompts": [
+    "Use /milestone-mode to plan and build this feature step by step",
+    "Break this multi-module refactor into safe milestones with checkpoints",
+    "Audit this codebase and report progress at each milestone"
+  ],
+  "author": {
+    "name": "Embarrassedfisherman",
+    "url": "https://github.com/Embarrassedfisherman"
+  },
+  "homepage": "https://github.com/Embarrassedfisherman/agy-milestone-progress",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Embarrassedfisherman/agy-milestone-progress"
+  }
 }

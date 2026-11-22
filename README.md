@@ -1,107 +1,169 @@
 # Milestone Progress (`milestone-progress`)
 
-面向 **Antigravity 2.0 桌面端** 的全局透明执行与分阶段里程碑插件（当前版本：`v1.0.3`）。
+**English** | [简体中文](./README.zh-CN.md)
 
-用于解决大型项目任务中「发送提示词后黑盒思考几十分钟、点开全是底层工具指令、无法直观判断实时进展与所处阶段」的问题。
+[![CI](https://github.com/Embarrassedfisherman/agy-milestone-progress/actions/workflows/ci.yml/badge.svg)](https://github.com/Embarrassedfisherman/agy-milestone-progress/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB.svg)](https://www.python.org/)
+[![Version](https://img.shields.io/badge/Version-1.1.0-10B981.svg)](./CHANGELOG.md)
+
+A global **Antigravity (AGY)** plugin that brings **transparent execution, phased milestone checkpoints, silent-loop guardrails, and completion notifications** to long-running AI agent tasks—with built-in **multilingual support** (`en`, `zh`, `ja`, and auto-adaptive rules for any conversation language).
+
+It solves a common pain point on large projects: sending a prompt and watching the agent silently chain tool calls for 20+ minutes inside collapsed `<thinking>` blocks with no clear picture of current progress, phase boundaries, or when your input is needed.
 
 ---
 
-## 1. 快速开始（安装与启停）
+## 1. Quick Start
 
-### 环境要求
-- **Antigravity 2.0**
-- **Python 3.10+**（仅使用标准库，零第三方依赖）
-- **操作系统**：macOS 完整支持（含系统桌面通知）；Linux / Windows 自动跳过桌面通知，其余规则、静默提醒与防跑偏硬刹车功能均可正常使用。
+### Requirements
+- **Antigravity 2.x** (verified on Desktop App `2.34.0` & `agy` CLI `1.5.13`; see [Compatibility Matrix](./docs/COMPATIBILITY.md))
+- **Python 3.9+** (standard library only, zero third-party dependencies — works out-of-the-box with stock macOS `python3`)
+- **OS**:
+  - **macOS**: Full support including native desktop notifications (`osascript`)
+  - **Linux**: Full core support + optional desktop notifications when `notify-send` is installed
+  - **Windows**: Full core support (notifications safely skipped; ensure `python3` in `PATH` points to Python 3.9+)
 
-### 一键安装（推荐）
+### Option A: Install / Update from Source (Recommended)
 
 ```bash
 git clone https://github.com/Embarrassedfisherman/agy-milestone-progress.git
 cd agy-milestone-progress
-chmod +x ./scripts/sync.sh
-./scripts/sync.sh
+python3 scripts/sync.py --clean
 ```
 
-脚本会自动完成以下三步：
-1. 运行单元测试套件验证 Hook 逻辑；
-2. 将插件核心文件同步到全局目录 `~/.gemini/config/plugins/milestone-progress`（可通过环境变量 `MILESTONE_PLUGIN_DIR` 自定义）；
-3. 执行 `diff` 校验确保安装完整（即时生效，无需重启）。
+*(macOS / Linux users can also run `./scripts/sync.sh --clean`, which wraps `scripts/sync.py`.)*
 
-> Windows 用户或手动安装方式：直接将 `plugin.json`、`hooks.json`、`rules/`、`skills/`、`hooks/` 复制到 `~/.gemini/config/plugins/milestone-progress/` 即可。
+The sync script automatically:
+1. Runs the full unit test suite;
+2. Validates the plugin with `agy plugin validate --strict` (when `agy` is installed);
+3. Syncs **only runtime plugin files** to `~/.gemini/config/plugins/milestone-progress` (customizable via `--target` or `MILESTONE_PLUGIN_DIR`), leaving repo docs/CI/tests out of your live plugin directory;
+4. Verifies SHA-256 integrity for every synced file (takes effect immediately, no restart required).
 
-### 开关与卸载
-- **UI 启停**：在 Antigravity 2.0 左侧 **Skills & Customizations -> Plugins** 中找到 **Milestone Progress** 一键开关。
-- **CLI 启停**：
+To update later, pull the latest commits and re-run `python3 scripts/sync.py --clean`—your personal configuration in `$PLUGIN_DATA/config.json` is preserved across upgrades.
+
+### Option B: Install from GitHub Releases (`.zip`)
+
+Download `milestone-progress-vX.Y.Z.zip` from [GitHub Releases](https://github.com/Embarrassedfisherman/agy-milestone-progress/releases) and extract its contents into:
+
+```text
+~/.gemini/config/plugins/milestone-progress/
+```
+
+### Enable, Disable & Uninstall
+
+- **Desktop UI**: Open **Skills & Customizations → Plugins → Milestone Progress** to toggle on/off.
+- **CLI**:
   ```bash
   agy plugin disable milestone-progress
   agy plugin enable milestone-progress
   ```
-- **彻底卸载**：
+- **Uninstall**:
   ```bash
   rm -rf ~/.gemini/config/plugins/milestone-progress
   ```
 
 ---
 
-## 2. 目录结构与关键路径
+## 2. How It Works (4-Layer Architecture)
 
-- **全局生效安装路径**：`~/.gemini/config/plugins/milestone-progress`
-- **运行时状态存储**：`~/.gemini/antigravity/plugin_data/milestone-progress/milestone-progress-state/`
-- **完整复盘与避坑文档**：[docs/RETROSPECTIVE.md](./docs/RETROSPECTIVE.md)
+| Layer | File(s) | Purpose | Behavior |
+| :--- | :--- | :--- | :--- |
+| **Rules** | [rules/AGENTS.md](./rules/AGENTS.md) | Smart scoping, live narration & phase boundaries | 1. **Language-Adaptive**: Automatically responds in your conversation language.<br>2. **Smart Threshold**: Quick Q&A / edits (`<= 2` files, `<= 4` steps) run directly; `3+` files or multi-module tasks enter Phased Milestone Mode.<br>3. **Live Narration**: Outputs 1 concise visible status sentence before multi-step tool batches.<br>4. **One Milestone Per Turn**: Maintains `task.md` Artifact and ends each milestone with a 5-item plain-language checkpoint card. |
+| **Skill** | [skills/milestone-mode/SKILL.md](./skills/milestone-mode/SKILL.md) | On-demand strict milestone control | Type `/milestone-mode` in chat anytime to enforce strict phased checkpoints. |
+| **Guardrail Hook** | [hooks/progress_hook.py](./hooks/progress_hook.py), [hooks/i18n.py](./hooks/i18n.py), [hooks/locales/](./hooks/locales/) | Prevent silent black-box runs & runaway loops | 1. **Silent Nudge** (`PreInvocation` + `PostToolUse`): Reverse-scans up to `512 KB` of `transcript.jsonl` (`32 KB` chunks). After `3` consecutive silent tool-calling invocations, injects a localized `[Progress Reminder]` prompting visible narration.<br>2. **Hard Safeguard**: At invocation `12` (and every `4` thereafter), injects `[Progress Guardian]` instructing the agent to wrap up safely and report. |
+| **Notification Hook** | [hooks/progress_hook.py](./hooks/progress_hook.py) (`Stop`) | Alert you when a real milestone pauses while you are in another window | Fires a localized desktop notification only on non-trivial turns (`>= 3` invocations, `>= 3` tool calls, `>= 15s` elapsed, or error stops — never on `USER_CANCELED` or short Q&A). |
+
+---
+
+## 3. Multilingual Support & Persistent User Configuration
+
+### Language Resolution Order
+1. Environment variable `MILESTONE_PROGRESS_LANG` (e.g., `en`, `zh`, `ja`)
+2. Persistent user config `language` in `$PLUGIN_DATA/config.json`
+3. **Automatic detection** (`"auto"`, default): detects language from your prompt (Kana → `ja`, Han → `zh`, other text → `en`), remembers it per conversation so `Stop` notifications match your chat, and falls back to system `LANG` / `en` when empty.
+
+Built-in Hook locale packs live in [hooks/locales/](./hooks/locales/) (`en.json`, `zh.json`, `ja.json`). Adding a new language only takes one JSON file—see [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+### Persistent Threshold & Preference Overrides
+Instead of editing plugin source files (which get overwritten on update), create an optional JSON file at:
 
 ```text
-agy-milestone-progress/
-├── plugin.json                      # 插件元信息（v1.0.3）
-├── hooks.json                       # 生命周期 Hook 注册（SessionStart / PostToolUse / PreInvocation / Stop）
-├── README.md                        # 使用说明与架构速查（不会同步到插件目录，零上下文开销）
-├── LICENSE                          # MIT 开源协议
-├── docs/
-│   └── RETROSPECTIVE.md             # 需求决策复盘与 Antigravity Hook 底层避坑沉淀
-├── rules/
-│   └── AGENTS.md                    # 智能阈值分流 + 实时正文中文播报 + 分阶段暂停汇报规则
-├── skills/
-│   └── milestone-mode/
-│       └── SKILL.md                 # /milestone-mode 显式技能定义
-├── hooks/
-│   └── progress_hook.py             # 静默检测提醒、12轮防跑偏硬刹车与 macOS 桌面通知脚本
-├── scripts/
-│   └── sync.sh                      # 一键执行单测、同步到全局插件目录并做 diff 校验
-└── tests/
-    └── test_progress_hook.py        # 单元测试套件（覆盖 protojson、并发锁、大日志回溯、过期清理与通知过滤）
+~/.gemini/antigravity/plugin_data/milestone-progress/config.json
+```
+
+All keys are optional and safely validated (invalid values fall back to defaults):
+
+```json
+{
+  "language": "auto",
+  "silent_nudge_interval": 3,
+  "safeguard_first_invocation": 12,
+  "safeguard_repeat_interval": 4,
+  "notify_enabled": true,
+  "notify_min_invocations": 3,
+  "notify_min_tools": 3,
+  "notify_min_elapsed_sec": 15.0,
+  "state_retention_days": 14
+}
 ```
 
 ---
 
-## 3. 核心工作机制
+## 4. Repository Layout & Local Operations Ledgers
 
-| 层级 | 组件 | 解决的问题 | 实际表现 |
-| :--- | :--- | :--- | :--- |
-| **规则层** | [rules/AGENTS.md](./rules/AGENTS.md) | 避免大任务一镜到底盲跑 & 全程躲在 `<thinking>` | 1. **智能分流**：`<= 2` 文件或简单问答直接完成；`>= 3` 文件或跨模块任务进入里程碑模式。<br>2. **实时行内播报**：多步工具调用前直接在正文中输出一行简短中文进度（如 `🧭 正在…`）。<br>3. **单阶段暂停汇报**：先确认计划并维护 `task.md` Artifact；每回合最多执行 1 个子模块，结束输出标准化中文进度卡片等待确认。 |
-| **技能层** | [skills/milestone-mode/SKILL.md](./skills/milestone-mode/SKILL.md) | 需要随时手动强制开启严格分阶段控制 | 在聊天框输入 `/milestone-mode` 即可显式激活。 |
-| **守护层** | [hooks/progress_hook.py](./hooks/progress_hook.py) (`PreInvocation` + `PostToolUse`) | 防止模型忘记播报或单阶段失控长跑 | 1. **3 轮静默提醒**：倒序分块扫描 `transcript.jsonl`（最多回溯 512KB），若模型连续 `3` 轮只调工具未输出可见正文，自动注入系统提醒促使其下一步播报中文状态。<br>2. **12 轮硬刹车**：单回合连续调用达 `12` 轮（及之后每 `4` 轮）时注入收尾指令，要求安全停下并向用户汇报。 |
-| **通知层** | [hooks/progress_hook.py](./hooks/progress_hook.py) (`Stop`) | 执行子模块期间切走窗口，不知道何时停下等确认 | 仅当回合满足非平凡条件（`>= 3` 轮调用、`>= 3` 次工具操作、`>= 15s` 耗时或异常停止，且非 `USER_CANCELED`）时触发 macOS 系统通知；日常短问答零打扰。 |
+Repo maintenance files (`docs/`, `CHANGELOG*.md`, `tests/`, `scripts/`, `.github/`) are strictly excluded from the synced runtime plugin directory so they consume **zero** agent context tokens.
+
+```text
+agy-milestone-progress/
+├── plugin.json                      # Plugin manifest (AGY-compliant metadata)
+├── hooks.json                       # Lifecycle hook bindings
+├── assets/logo.svg                  # Vector plugin icon (light/dark theme ready)
+├── rules/AGENTS.md                  # Language-adaptive milestone & narration rules
+├── skills/milestone-mode/SKILL.md   # /milestone-mode explicit skill
+├── hooks/
+│   ├── progress_hook.py             # Core lifecycle hook (Python 3.9+, zero deps)
+│   ├── i18n.py                      # Locale loader & language auto-detector
+│   └── locales/{en,zh,ja}.json      # Extensible Hook message catalogs
+├── scripts/
+│   ├── sync.py / sync.sh            # Cross-platform test + validate + sync installer
+│   ├── doctor.py                    # Local health & AGY compatibility diagnostics
+│   └── release.py                   # Safe release preflight, version bump & zip packager
+├── tests/                           # 25 unit, i18n-parity & repo-integrity tests
+├── CHANGELOG.md / CHANGELOG.zh-CN.md
+├── CONTRIBUTING.md / SECURITY.md
+└── docs/
+    ├── COMPATIBILITY.md             # Antigravity App / CLI / Python / OS matrix
+    ├── BUG_LOG.md                   # Structured plugin bug & upstream quirk registry
+    ├── RELEASE_PROCESS.md           # Repeatable frequent-release SOP
+    └── RETROSPECTIVE.md             # Engineering design & AGY hook lessons (Chinese)
+```
 
 ---
 
-## 4. 常用阈值调整
+## 5. Diagnostics, Development & Release Commands
 
-如需调整灵敏度，编辑 [hooks/progress_hook.py](./hooks/progress_hook.py) 顶部常量后重新运行 `./scripts/sync.sh` 即可生效：
+```bash
+# Run all unit, i18n parity, and repo integrity tests
+python3 -m unittest discover -s tests -v
 
-- `SILENT_NUDGE_INTERVAL = 3`：连续多少轮静默工具调用后提醒模型输出正文进度
-- `SAFEGUARD_FIRST_INVOCATION = 12`：单回合首次触发“防跑偏收尾汇报”的轮数阈值
-- `SAFEGUARD_REPEAT_INTERVAL = 4`：首次触发后每隔多少轮再次提醒
-- `NOTIFY_MIN_INVOCATIONS = 3` / `NOTIFY_MIN_TOOLS = 3` / `NOTIFY_MIN_ELAPSED_SEC = 15.0`：触发 macOS 桌面通知的最低门槛
+# Check local health, sync status, and Antigravity compatibility
+python3 scripts/doctor.py --with-tests
+python3 scripts/doctor.py --markdown
+
+# Validate strictly against Antigravity's official plugin loader
+agy plugin validate . --strict
+
+# Sync runtime bundle to global Antigravity plugin folder
+python3 scripts/sync.py --clean
+
+# Preview release preflight and build clean runtime zip (dry-run by default)
+python3 scripts/release.py --package
+```
 
 ---
 
-## 5. 开发与测试指令
+## 6. Contributing & License
 
-1. **运行单元测试**
-   ```bash
-   python3 tests/test_progress_hook.py -v
-   ```
+Contributions—especially new locale translations and Antigravity version compatibility reports—are very welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) and [SECURITY.md](./SECURITY.md).
 
-2. **一键测试并同步至全局插件目录**
-   ```bash
-   ./scripts/sync.sh
-   ```
+Licensed under the [MIT License](./LICENSE).

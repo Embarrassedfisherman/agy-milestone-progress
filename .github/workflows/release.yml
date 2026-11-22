@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Publish GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify tag matches plugin.json and CHANGELOG.md
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import json, os, re, sys
+          from pathlib import Path
+
+          tag = os.environ["TAG_NAME"]
+          if not re.fullmatch(r"v\d+\.\d+\.\d+", tag):
+              sys.exit(f"Tag {tag!r} must match vX.Y.Z")
+          version = tag[1:]
+
+          manifest = json.loads(Path("plugin.json").read_text(encoding="utf-8"))
+          if manifest.get("version") != version:
+              sys.exit(f"plugin.json version ({manifest.get('version')}) != tag version ({version})")
+
+          changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
+          if not re.search(rf"^##\s+\[{re.escape(version)}\]", changelog, re.MULTILINE):
+              sys.exit(f"CHANGELOG.md is missing section '## [{version}]'")
+
+          print(f"Verified release version {version}")
+          PY
+
+      - name: Run unit tests and strict CI checks
+        run: |
+          python -m unittest discover -s tests -v
+          python scripts/doctor.py --ci --skip-tests --strict
+
+      - name: Package clean runtime archive and checksums
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          VERSION="${TAG_NAME#v}"
+          python scripts/release.py --version "$VERSION" --package --skip-tests
+          (cd dist && sha256sum "milestone-progress-v${VERSION}.zip" > SHA256SUMS.txt)
+          cat dist/SHA256SUMS.txt
+
+      - name: Extract release notes from CHANGELOG.md
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import os, re
+          from pathlib import Path
+
+          version = os.environ["TAG_NAME"][1:]
+          changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
+          pattern = re.compile(
+              rf"^##\s+\[{re.escape(version)}\][^\n]*\n(.*?)(?=^##\s+\[|\Z)",
+              re.MULTILINE | re.DOTALL,
+          )
+          match = pattern.search(changelog)
+          body = match.group(1).strip() if match else f"Release v{version}."
+          notes = (
+              f"{body}\n\n"
+              "---\n\n"
+              "### Installation / Upgrade\n\n"
+              "Download `milestone-progress-v" + version + ".zip` and extract into "
+              "`~/.gemini/config/plugins/milestone-progress/`, or pull the repo and run:\n\n"
+              "```bash\n"
+              "python3 scripts/sync.py --clean\n"
+              "```\n"
+          )
+          Path("dist/RELEASE_NOTES.md").write_text(notes, encoding="utf-8")
+          PY
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          VERSION="${TAG_NAME#v}"
+          gh release create "$TAG_NAME" \
+            "dist/milestone-progress-v${VERSION}.zip" \
+            "dist/SHA256SUMS.txt" \
+            --title "Milestone Progress ${TAG_NAME}" \
+            --notes-file dist/RELEASE_NOTES.md

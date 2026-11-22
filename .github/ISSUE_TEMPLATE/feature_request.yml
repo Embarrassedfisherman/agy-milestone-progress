@@ -1,0 +1,20 @@
+name: Feature Request / New Locale
+description: Propose a new feature, config option, or language translation pack
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Motivation
+      description: Describe the workflow pain point or language you want to support.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Solution
+      description: Share your suggested behavior, config keys, or locale code (e.g. `ko`, `de`, `fr`, `es`).
+    validations:
+      required: true

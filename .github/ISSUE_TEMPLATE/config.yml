@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Compatibility Matrix
+    url: https://github.com/Embarrassedfisherman/agy-milestone-progress/blob/main/docs/COMPATIBILITY.md
+    about: Check verified Antigravity App, CLI, OS, and Python versions first.
+  - name: Known Bugs & Upstream Quirks
+    url: https://github.com/Embarrassedfisherman/agy-milestone-progress/blob/main/docs/BUG_LOG.md
+    about: Browse tracked plugin issues and upstream Antigravity platform workarounds.

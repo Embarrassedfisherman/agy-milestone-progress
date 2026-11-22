@@ -1,0 +1,58 @@
+name: Bug Report
+description: Report a bug in milestone-progress rules, skills, hooks, or notifications
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting an issue! Running `python3 scripts/doctor.py --markdown` locally helps us diagnose environment issues quickly.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Clear description of the bug and what you expected instead.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - macOS
+        - Linux
+        - Windows
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: Versions (Plugin / Antigravity App / agy CLI / Python)
+      placeholder: "e.g. plugin 1.1.0 / App 2.34.0 / agy 1.5.13 / Python 3.9.6"
+    validations:
+      required: true
+
+  - type: input
+    id: language
+    attributes:
+      label: Conversation Language / Configured Locale
+      placeholder: "e.g. auto (English / 简体中文 / 日本語) or config.json language=en"
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `python3 scripts/doctor.py --markdown` (optional)
+      render: markdown

@@ -1,0 +1,45 @@
+name: Antigravity Compatibility Report
+description: Report a regression or new tool/hook change after an Antigravity client update
+title: "[Compat]: Antigravity "
+labels: ["compatibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template when an **Antigravity Desktop App** or **`agy` CLI** update breaks or changes plugin behavior.
+
+  - type: input
+    id: agy_version
+    attributes:
+      label: Antigravity App & CLI Version
+      placeholder: "e.g. Antigravity App 2.35.0 / agy CLI 1.6.0"
+    validations:
+      required: true
+
+  - type: input
+    id: plugin_version
+    attributes:
+      label: Plugin Version
+      placeholder: "e.g. 1.1.0"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: affected_layers
+    attributes:
+      label: Affected Components
+      options:
+        - label: Plugin discovery / `agy plugin validate`
+        - label: Rules (`rules/AGENTS.md`)
+        - label: Skill (`/milestone-mode`)
+        - label: Lifecycle Hooks (`SessionStart` / `PostToolUse` / `PreInvocation` / `Stop`)
+        - label: Desktop notifications
+        - label: New native tool names missing labels
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Observed Behavior & Error Logs
+      description: Include `python3 scripts/doctor.py --markdown` and `agy plugin validate . --strict --json` output if available.
+    validations:
+      required: true
