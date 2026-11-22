@@ -184,6 +184,7 @@ class ProgressHookTests(unittest.TestCase):
             [sys.executable, str(HOOK_PATH)],
             input=json.dumps({**self.base_payload, "hookEventName": "PreInvocation", "invocationNum": 1}),
             text=True,
+            encoding="utf-8",
             capture_output=True,
             check=True,
         )
@@ -206,6 +207,7 @@ class ProgressHookTests(unittest.TestCase):
                 [sys.executable, str(HOOK_PATH)],
                 input=json.dumps(payload),
                 text=True,
+                encoding="utf-8",
                 capture_output=True,
                 env=env,
                 check=True,
@@ -441,6 +443,35 @@ class ProgressHookTests(unittest.TestCase):
                 with mock.patch.object(progress_hook.subprocess, "run") as run_mock:
                     progress_hook._send_desktop_notification("Title", "Sub", "Body")
                 run_mock.assert_not_called()
+
+    def test_windows_msvcrt_lock_branch_acquires_and_releases(self) -> None:
+        calls: list[tuple[int, int]] = []
+        attempts = {"count": 0}
+
+        class FakeMsvcrt:
+            LK_NBLCK = 2
+            LK_UNLCK = 0
+
+            @staticmethod
+            def locking(fd: int, mode: int, nbytes: int) -> None:
+                calls.append((mode, nbytes))
+                if mode == FakeMsvcrt.LK_NBLCK and attempts["count"] == 0:
+                    attempts["count"] += 1
+                    raise OSError("contended lock")
+
+        with mock.patch.object(progress_hook, "fcntl", None):
+            with mock.patch.object(progress_hook, "msvcrt", FakeMsvcrt):
+                with progress_hook._conversation_lock("conv-win-lock"):
+                    pass
+
+        self.assertEqual(
+            calls,
+            [
+                (FakeMsvcrt.LK_NBLCK, 1),
+                (FakeMsvcrt.LK_NBLCK, 1),
+                (FakeMsvcrt.LK_UNLCK, 1),
+            ],
+        )
 
 
 if __name__ == "__main__":

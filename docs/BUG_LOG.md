@@ -19,6 +19,8 @@ Structured local tracking registry for all plugin defects (`BUG-NNN`) and upstre
 | `BUG-007` | `_handle_stop()` did not inspect non-empty `payload["error"]` alongside enum reasons | Low | ✅ Fixed | `v1.0.3` (AGY `2.34.0`) | `v1.1.0` | `test_stop_detects_nonempty_error_field_with_new_termination_reasons` |
 | `BUG-008` | `README.md` stated Python `3.10+` while stock macOS `python3` is `3.9.6` (no 3.9 CI guard) | Medium | ✅ Fixed | `v1.0.3` | `v1.1.0` | `test_python_39_runtime_syntax_guard` + CI Python `3.9` matrix |
 | `BUG-009` | Hardcoded Chinese strings across Rules, Skill, Hook nudges, and notifications block non-Chinese users | Medium | ✅ Fixed | `v1.0.0` | `v1.1.0` | `test_english_and_japanese_auto_detection_end_to_end` + `tests/test_i18n.py` |
+| `BUG-010` | Windows lacked file locking (`fcntl` unavailable), causing concurrent `PostToolUse` state races | High | ✅ Fixed | `v1.0.3` (caught by Windows CI) | Unreleased (`v1.1.1`) | `test_concurrent_post_tool_use_preserves_all_updates` + `test_windows_msvcrt_lock_branch_acquires_and_releases` |
+| `BUG-011` | Windows legacy codepage stdio could fail encoding emoji output in hook and CLI scripts | Medium | ✅ Fixed | `v1.1.0` (hardened for Windows CI) | Unreleased (`v1.1.1`) | Windows CI matrix (`doctor.py`, `sync.py`, `release.py`) |
 | `UPSTREAM-001` | `initialNumSteps` increments within a turn; protojson omits `0` and may stringify `int64` | Info | 🛡️ Mitigated | AGY `2.x` | Mitigated in `v1.0.1` | `test_changing_initial_num_steps_and_protojson_fields_keep_turn_alive` |
 | `UPSTREAM-002` | `systemMessage.metadata` string values rejected by Go `utils.ScrubInternalFields` | High | 🛡️ Mitigated | AGY `2.x` | Mitigated in `v1.0.2` | `test_safeguard_fires_without_metadata_and_repeats_at_interval` |
 
@@ -76,6 +78,19 @@ Structured local tracking registry for all plugin defects (`BUG-NNN`) and upstre
 - **Status**: ✅ Fixed in `v1.1.0`
 - **Symptom**: English and other non-Chinese users received forced Chinese inline progress lines, Chinese checkpoint cards, Chinese hook reminders, and Chinese macOS notifications.
 - **Resolution**: Made `rules/AGENTS.md` and `SKILL.md` language-adaptive, added `hooks/i18n.py` + `hooks/locales/{en,zh,ja}.json` with automatic prompt detection and key/placeholder parity tests, and added persistent `$PLUGIN_DATA/config.json` overrides.
+
+### BUG-010 — Concurrent `PostToolUse` State Races on Windows (Missing `msvcrt` Locking)
+- **Status**: ✅ Fixed in Unreleased (`v1.1.1`)
+- **Environment**: Windows Server 2025 / Python `3.9`–`3.13` (caught by GitHub Actions CI run `44972486428`)
+- **Symptom**: `test_concurrent_post_tool_use_preserves_all_updates` lost 1–3 of 12 concurrent tool updates on Windows because `fcntl` is unavailable and `_conversation_lock` became a no-op.
+- **Root Cause**: `_conversation_lock()` only implemented POSIX `fcntl.flock` and yielded without locking on Windows.
+- **Resolution**: Added native Windows `msvcrt.locking(LK_NBLCK)` with backoff retry and `LK_UNLCK` release in `_conversation_lock()`, plus `PermissionError` retry on `_save_state()` atomic replace.
+
+### BUG-011 — Windows Legacy Console Codepage Risk on Emoji Output
+- **Status**: ✅ Fixed in Unreleased (`v1.1.1`)
+- **Environment**: Windows (`cp1252` / legacy console encoding)
+- **Symptom**: Writing emoji/Unicode status lines from `progress_hook.py`, `doctor.py`, `sync.py`, or `release.py` to non-UTF-8 Windows stdio can raise `UnicodeEncodeError`.
+- **Resolution**: Explicitly reconfigured `sys.stdin` / `sys.stdout` / `sys.stderr` to UTF-8 (`errors="replace"`) in CLI entrypoints and passed `encoding="utf-8"` in subprocess unit tests.
 
 ---
 

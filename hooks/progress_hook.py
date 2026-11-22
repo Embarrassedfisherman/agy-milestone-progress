@@ -22,6 +22,11 @@ except ImportError:  # pragma: no cover - non-POSIX fallback
     fcntl = None  # type: ignore[assignment]
 
 try:
+    import msvcrt
+except ImportError:  # pragma: no cover - POSIX fallback
+    msvcrt = None  # type: ignore[assignment]
+
+try:
     from . import i18n  # type: ignore[import-not-found]
 except ImportError:
     _HOOK_DIR = str(Path(__file__).resolve().parent)
@@ -192,16 +197,33 @@ def _lock_path(conversation_id: str) -> Path:
 
 @contextlib.contextmanager
 def _conversation_lock(conversation_id: str) -> Iterator[None]:
-    if fcntl is None:
+    if fcntl is None and msvcrt is None:
         yield
         return
     lock_file = _lock_path(conversation_id)
     fh = None
+    win_fd: int | None = None
     locked = False
     try:
-        fh = lock_file.open("a+", encoding="utf-8")
-        fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
-        locked = True
+        if fcntl is not None:
+            fh = lock_file.open("a+", encoding="utf-8")
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
+            locked = True
+        elif msvcrt is not None:
+            win_fd = os.open(str(lock_file), os.O_CREAT | os.O_RDWR)
+            deadline = time.monotonic() + 4.0
+            delay = 0.005
+            while True:
+                try:
+                    os.lseek(win_fd, 0, os.SEEK_SET)
+                    msvcrt.locking(win_fd, msvcrt.LK_NBLCK, 1)
+                    locked = True
+                    break
+                except OSError:
+                    if time.monotonic() >= deadline:
+                        break
+                    time.sleep(delay)
+                    delay = min(delay * 1.5, 0.03)
     except OSError:
         if fh is not None:
             try:
@@ -209,17 +231,34 @@ def _conversation_lock(conversation_id: str) -> Iterator[None]:
             except OSError:
                 pass
             fh = None
+        if win_fd is not None:
+            try:
+                os.close(win_fd)
+            except OSError:
+                pass
+            win_fd = None
     try:
         yield
     finally:
         if fh is not None:
             try:
-                if locked:
+                if locked and fcntl is not None:
                     fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
             except OSError:
                 pass
             try:
                 fh.close()
+            except OSError:
+                pass
+        if win_fd is not None:
+            try:
+                if locked and msvcrt is not None:
+                    os.lseek(win_fd, 0, os.SEEK_SET)
+                    msvcrt.locking(win_fd, msvcrt.LK_UNLCK, 1)
+            except OSError:
+                pass
+            try:
+                os.close(win_fd)
             except OSError:
                 pass
 
@@ -279,7 +318,14 @@ def _save_state(conversation_id: str, state: dict[str, Any]) -> None:
     tmp_path = path.with_name(f"{path.name}.{os.getpid()}.{time.time_ns()}.tmp")
     try:
         tmp_path.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
-        tmp_path.replace(path)
+        for attempt in range(5):
+            try:
+                tmp_path.replace(path)
+                return
+            except PermissionError:
+                if attempt == 4:
+                    raise
+                time.sleep(0.01)
     except OSError:
         try:
             tmp_path.unlink(missing_ok=True)
@@ -723,6 +769,10 @@ def process_event(payload: dict[str, Any], now: float | None = None) -> dict[str
 
 
 def main() -> int:
+    if hasattr(sys.stdin, "reconfigure"):
+        sys.stdin.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     try:
         raw = sys.stdin.read()
         payload = json.loads(raw) if raw.strip() else {}

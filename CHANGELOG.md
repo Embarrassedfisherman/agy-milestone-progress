@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Added native Windows exclusive file locking (`msvcrt.locking` with non-blocking retry) and transient `PermissionError` replace retry in `hooks/progress_hook.py` so concurrent `PostToolUse` updates are never lost on Windows (`BUG-010`).
+- Reconfigured stdio to UTF-8 (`errors="replace"`) in `hooks/progress_hook.py`, `scripts/doctor.py`, `scripts/sync.py`, and `scripts/release.py` to prevent Windows console encoding errors on emoji/multilingual output (`BUG-011`).
+- Updated GitHub Actions CI matrix to run Linux Python `3.9` on `ubuntu-24.04` (since `ubuntu-latest` / Ubuntu 26.04 no longer publishes prebuilt Python `3.9`).
+
 ---
 
 ## [1.1.0] - 2026-11-22

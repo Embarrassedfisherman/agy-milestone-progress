@@ -86,6 +86,10 @@ def build_package(repo_root: Path, version: str, output_path: Path) -> list[str]
 
 
 def main(argv: list[str] | None = None) -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(
         description="Preflight, bump version, and package a clean release zip for milestone-progress."
     )

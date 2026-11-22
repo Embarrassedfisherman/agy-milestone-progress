@@ -8,6 +8,11 @@
 
 ## [Unreleased]
 
+### 修复
+- 在 `hooks/progress_hook.py` 中新增 Windows 原生文件排他锁（`msvcrt.locking` 非阻塞退避重试）及原子替换瞬态 `PermissionError` 重试，彻底修复 Windows 并发 `PostToolUse` 状态竞态丢计数问题（`BUG-010`）。
+- 在 `hooks/progress_hook.py`、`scripts/doctor.py`、`scripts/sync.py`、`scripts/release.py` 中显式配置 UTF-8 标准输入输出，避免 Windows 旧版终端代码页输出 Emoji/多语言字符报错（`BUG-011`）。
+- 调整 GitHub Actions CI 矩阵：Linux Python `3.9` 改用 `ubuntu-24.04` 运行器（适配 `ubuntu-latest` 升级至 Ubuntu 26.04 后不再提供预编译 Python 3.9 的变化）。
+
 ---
 
 ## [1.1.0] - 2026-11-22
