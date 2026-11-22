@@ -21,3 +21,7 @@ venv/
 
 # Build / Release artifacts
 dist/
+
+# Local-only agent rules & private ops ledger (Layer 3: never committed, never synced)
+.agents/
+.local-ops/

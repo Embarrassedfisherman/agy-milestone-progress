@@ -88,12 +88,35 @@ class RepoIntegrityTests(unittest.TestCase):
         for loc_file in (ROOT_DIR / "hooks" / "locales").glob("*.json"):
             self.assertIn(loc_file.relative_to(ROOT_DIR).as_posix(), runtime)
 
-        # Repo ops/docs/CI files must NEVER leak into the synced plugin directory
-        forbidden_prefixes = ("docs/", "tests/", "scripts/", ".github/", "CHANGELOG", "README")
+        # Layer 2 (public ops/docs/CI) and Layer 3 (local-only .agents/.local-ops) must NEVER leak into runtime
+        forbidden_prefixes = (
+            ".agents/",
+            ".local-ops/",
+            "dist/",
+            "docs/",
+            "tests/",
+            "scripts/",
+            ".github/",
+            "CHANGELOG",
+            "README",
+        )
         for rel in runtime:
             self.assertFalse(
                 rel.startswith(forbidden_prefixes),
                 f"Non-runtime file leaked into sync allowlist: {rel}",
+            )
+
+        # Verify Layer 3 local-only directories stay ignored in .gitignore
+        gitignore_lines = {
+            line.strip()
+            for line in (ROOT_DIR / ".gitignore").read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.strip().startswith("#")
+        }
+        for required_ignore in (".agents/", ".local-ops/", "dist/"):
+            self.assertIn(
+                required_ignore,
+                gitignore_lines,
+                f".gitignore must exclude Layer 3 directory {required_ignore}",
             )
 
     def test_doctor_ci_and_release_package_roundtrip(self) -> None:

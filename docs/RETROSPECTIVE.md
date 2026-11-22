@@ -92,3 +92,21 @@
 3. **执行过程中**：
    - 留在窗口时：直接看聊天流中每隔 2–3 步自动流式打印的单行中文状态（`🧭` / `✏️` / `🧪`）。
    - 切走窗口处理别的事时：等右上角弹出 `Antigravity · 项目名 — ⏸️ 阶段完成` 桌面通知，再切回来看阶段中文汇报卡片并回复“继续”或调整方向。
+
+---
+
+## 五、CI 漏验与跨平台发布复盘（`v1.1.0 → v1.1.1`，2026-11-22）
+
+### 5.1 发生了什么
+首次推送 `v1.1.0`（`b176a4b`）后，Agent 在 `git push` 返回成功即宣布完成，把检查 GitHub Actions 留给了用户。随后用户在远端发现 **6 / 15 项 CI 失败**（全部 5 个 Windows 任务因缺少 `msvcrt` 文件锁导致并发测试丢计数；`ubuntu-latest / Python 3.9` 因 Ubuntu 26.04 无预编译 Python 3.9 失败），且因 `release.yml` 与 `v1.1.0` 标签同批首次推送，GitHub 未自动触发 Release。
+
+### 5.2 为什么当时没有主动确认 CI（根因分析）
+1. **过早沿用旧的权限假设**：早期在沙盒里测 `gh --version` 曾报 `config.yml: operation not permitted`，导致后续误以为无法调用 `gh`，推送后没有主动尝试 `gh run list` / `gh run watch`。
+2. **本地 macOS 通过带来虚假安全感**：本地仅在 macOS（`fcntl` + UTF-8 默认终端 + Python 3.9.6）通过 25 项测试，未把远端跨平台 CI 绿灯视为交付完成的必要条件。
+3. **受步数上限提醒影响仓促收尾**：推送时已触发 12–16 轮收尾提醒，未坚持「宁可显式标注远端 CI 待验证，也不在未确认绿灯前宣布完成」。
+4. **原有发版 SOP 缺少推后门禁**：初版 `docs/RELEASE_PROCESS.md` 止步于 `git push --follow-tags`，既未要求先推 `main` 等 CI 全绿再打 Tag，也未强制要求执行 `gh run watch` 与 `gh release view` 闭环验收。
+
+### 5.3 已落盘的防复发机制
+1. **本机工作区级强制 Agent 规则（第三层，本地私有不入 Git）**：在 `.agents/rules/repo-ops.md` 中硬性规定每次推送后必须主动运行 `gh run watch` 验收全部 CI 矩阵，打标签后必须验收 `Release` 流水线与 Release 产物；无法验证时必须如实声明「未验证」，禁止报喜。
+2. **升级发版 SOP 与三层边界隔离**：更新 [`docs/RELEASE_PROCESS.md`](./RELEASE_PROCESS.md)，明确运行态本体 / 开源公共工程 / 本机私有台账（`.agents/`、`.local-ops/`）三层边界，并将发布固化为「先推 `main` 验 CI 全绿 → 再打并推送 Tag → 验 `Release` 与附件」两步门禁。
+3. **跨平台工程加固（已在 `v1.1.1` 修复并实测 15/15 绿灯）**：补齐 Windows 原生 `msvcrt.locking` 并发锁（`BUG-010`）、全脚本 UTF-8 `stdio`（`BUG-011`）及 `ubuntu-24.04` Python 3.9 矩阵测试。

@@ -57,20 +57,42 @@ This document defines the standard workflow for maintaining **Milestone Progress
    agy plugin validate dist/milestone-progress-vX.Y.Z.zip --strict
    python3 scripts/sync.py
    ```
-4. **Commit, Tag & Publish to GitHub**:
+4. **Push `main` First & Verify Full CI Green**:
    ```bash
    git add -A
    git commit -m "chore(release): prepare vX.Y.Z"
-   git tag -a vX.Y.Z -m "Release vX.Y.Z"
-   git push origin main --follow-tags
+   git push origin main
    ```
-   Pushing the `vX.Y.Z` tag triggers `.github/workflows/release.yml`, which re-runs tests, builds the clean runtime `.zip`, extracts release notes from `CHANGELOG.md`, and publishes the GitHub Release automatically.
+   Wait for the full cross-OS CI matrix (`macOS / Linux / Windows × Python 3.9–3.13`) to pass before tagging:
+   ```bash
+   RUN_ID="$(gh run list --branch main --limit 1 --json databaseId --jq '.[0].databaseId')"
+   gh run watch "$RUN_ID" --exit-status
+   ```
+   *(Never combine pushing a brand-new `release.yml` and a release tag in one push, and never tag a commit before remote CI is green.)*
+
+5. **Tag, Push Tag & Verify Remote GitHub Release (Mandatory Gate)**:
+   ```bash
+   git tag -a vX.Y.Z -m "Release vX.Y.Z"
+   git push origin vX.Y.Z
+   REL_ID="$(gh run list --workflow release.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
+   gh run watch "$REL_ID" --exit-status
+   gh release view vX.Y.Z --json name,tagName,url,assets
+   ```
+   Do **not** declare a release complete until both `CI` (all matrix jobs) and `Release` (`milestone-progress-vX.Y.Z.zip` + `SHA256SUMS.txt` published) have been verified as `success`.
 
 ---
 
-## 4. Separation of Repo Ops Files vs. Runtime Plugin Bundle
+## 4. Three-Layer Architecture Separation & Isolation Rules
 
-To keep users' installed plugin directories clean and avoid wasting Antigravity context budget:
+To keep the runtime plugin lightweight, the public open-source repo clean, and local maintainer notes private, files in this repository are strictly partitioned into **three isolated layers**:
 
-- **Synced / Packaged (Runtime Bundle Only)**: `plugin.json`, `hooks.json`, `assets/`, `rules/`, `skills/`, `hooks/`
-- **Repo-Only (Never Synced to `~/.gemini/config/plugins/milestone-progress`)**: `CHANGELOG*.md`, `docs/`, `tests/`, `scripts/`, `.github/`, `README*.md`, `CONTRIBUTING.md`, `SECURITY.md`
+| Layer | Purpose | Synced to Global Plugin Dir (`~/.gemini/config/plugins/...`) | Committed & Pushed to GitHub | Included Paths |
+| :--- | :--- | :--- | :--- | :--- |
+| **Layer 1: Runtime Plugin Bundle** | Core plugin executed by Antigravity (exact allowlist in `scripts/sync.py`) | ✅ Yes (10 files) | ✅ Yes | `plugin.json`, `hooks.json`, `assets/logo.svg`, `rules/AGENTS.md`, `skills/milestone-mode/SKILL.md`, `hooks/progress_hook.py`, `hooks/i18n.py`, `hooks/locales/*.json` |
+| **Layer 2: Public Open-Source Engineering & Ledgers** | Community docs, version/bug/compat ledgers, tests, scripts, and CI/CD | ❌ Never | ✅ Yes | `README.md`, `README.zh-CN.md`, `CHANGELOG.md`, `CHANGELOG.zh-CN.md`, `CONTRIBUTING.md`, `SECURITY.md`, `LICENSE`, `docs/{COMPATIBILITY,BUG_LOG,RELEASE_PROCESS,RETROSPECTIVE}.md`, `scripts/`, `tests/`, `.github/` |
+| **Layer 3: Local-Only Dev & Private Ledger** | Local workspace agent rules, personal troubleshooting drafts, build output | ❌ Never | ❌ Never (`.gitignore`) | `.agents/`, `.local-ops/`, `dist/`, local caches & temp files (`*.lock`, `*.tmp`, `__pycache__/`) |
+
+Isolation is enforced automatically by:
+1. `.gitignore` blocking all Layer 3 paths from entering Git staging;
+2. `scripts/sync.py:discover_runtime_files()` syncing and packaging **only** Layer 1 files;
+3. `tests/test_repo_integrity.py` asserting that neither Layer 2 nor Layer 3 paths can leak into the runtime bundle and that `.gitignore` preserves Layer 3 exclusions.
