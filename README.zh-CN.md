@@ -5,9 +5,9 @@
 [![CI](https://github.com/Embarrassedfisherman/agy-milestone-progress/actions/workflows/ci.yml/badge.svg)](https://github.com/Embarrassedfisherman/agy-milestone-progress/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB.svg)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/Version-1.1.0-10B981.svg)](./CHANGELOG.zh-CN.md)
+[![Version](https://img.shields.io/badge/Version-1.1.1-10B981.svg)](./CHANGELOG.zh-CN.md)
 
-面向 **Google Antigravity（AGY）** 的全局透明执行与分阶段里程碑控制插件（当前版本：`v1.1.0`），原生支持**多语言自动适配**（规则层自动跟随任意对话语言，Hook 内置 `en` / `zh` / `ja` 语言包并支持轻松扩展）。
+面向 **Google Antigravity（AGY）** 的全局透明执行与分阶段里程碑控制插件（当前版本：`v1.1.1`），原生支持**多语言自动适配**（规则层自动跟随任意对话语言，Hook 内置 `en` / `zh` / `ja` 语言包并支持轻松扩展）。
 
 用于解决大型项目任务中「发送提示词后黑盒思考几十分钟、折叠区全是底层工具参数、无法直观判断实时进展与所处阶段」的核心痛点。
 

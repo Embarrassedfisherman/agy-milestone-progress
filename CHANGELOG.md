@@ -9,10 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [1.1.1] - 2026-11-22
+
 ### Fixed
 - Added native Windows exclusive file locking (`msvcrt.locking` with non-blocking retry) and transient `PermissionError` replace retry in `hooks/progress_hook.py` so concurrent `PostToolUse` updates are never lost on Windows (`BUG-010`).
 - Reconfigured stdio to UTF-8 (`errors="replace"`) in `hooks/progress_hook.py`, `scripts/doctor.py`, `scripts/sync.py`, and `scripts/release.py` to prevent Windows console encoding errors on emoji/multilingual output (`BUG-011`).
-- Updated GitHub Actions CI matrix to run Linux Python `3.9` on `ubuntu-24.04` (since `ubuntu-latest` / Ubuntu 26.04 no longer publishes prebuilt Python `3.9`).
+- Updated GitHub Actions CI matrix to run Linux Python `3.9` on `ubuntu-24.04` (since `ubuntu-latest` / Ubuntu 26.04 no longer publishes prebuilt Python `3.9`), achieving `15/15` green CI across macOS, Linux, and Windows.
 
 ---
 
@@ -83,7 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Smart task-size threshold separating quick Q&A/minor edits from multi-module phased milestone execution.
 - Non-trivial turn completion notifications on macOS via safe `osascript` `on run argv` parameter passing.
 
-[Unreleased]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.0.3...v1.1.0
 [1.0.3]: https://github.com/Embarrassedfisherman/agy-milestone-progress/releases/tag/v1.0.3
 [1.0.2]: https://github.com/Embarrassedfisherman/agy-milestone-progress/commits/main

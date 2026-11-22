@@ -1,7 +1,7 @@
 {
   "name": "milestone-progress",
   "displayName": "Milestone Progress",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Smart phased milestone checkpoints, live inline progress narration, silent-loop guardrails, and completion notifications for Antigravity (multilingual).",
   "logo": "assets/logo.svg",
   "suggestedPrompts": [

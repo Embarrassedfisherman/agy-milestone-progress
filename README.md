@@ -5,7 +5,7 @@
 [![CI](https://github.com/Embarrassedfisherman/agy-milestone-progress/actions/workflows/ci.yml/badge.svg)](https://github.com/Embarrassedfisherman/agy-milestone-progress/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB.svg)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/Version-1.1.0-10B981.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.1.1-10B981.svg)](./CHANGELOG.md)
 
 A global **Antigravity (AGY)** plugin that brings **transparent execution, phased milestone checkpoints, silent-loop guardrails, and completion notifications** to long-running AI agent tasks—with built-in **multilingual support** (`en`, `zh`, `ja`, and auto-adaptive rules for any conversation language).
 

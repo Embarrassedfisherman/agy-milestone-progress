@@ -8,10 +8,14 @@
 
 ## [Unreleased]
 
+---
+
+## [1.1.1] - 2026-11-22
+
 ### 修复
 - 在 `hooks/progress_hook.py` 中新增 Windows 原生文件排他锁（`msvcrt.locking` 非阻塞退避重试）及原子替换瞬态 `PermissionError` 重试，彻底修复 Windows 并发 `PostToolUse` 状态竞态丢计数问题（`BUG-010`）。
 - 在 `hooks/progress_hook.py`、`scripts/doctor.py`、`scripts/sync.py`、`scripts/release.py` 中显式配置 UTF-8 标准输入输出，避免 Windows 旧版终端代码页输出 Emoji/多语言字符报错（`BUG-011`）。
-- 调整 GitHub Actions CI 矩阵：Linux Python `3.9` 改用 `ubuntu-24.04` 运行器（适配 `ubuntu-latest` 升级至 Ubuntu 26.04 后不再提供预编译 Python 3.9 的变化）。
+- 调整 GitHub Actions CI 矩阵：Linux Python `3.9` 改用 `ubuntu-24.04` 运行器（适配 `ubuntu-latest` 升级至 Ubuntu 26.04 后不再提供预编译 Python 3.9 的变化），三大平台 15 项 CI 全部通过。
 
 ---
 
@@ -82,7 +86,8 @@
 - 实现任务复杂度智能阈值分流（短问答直出，多模块任务自动进入分阶段里程碑暂停模式）。
 - 实现 macOS 非平凡回合完成桌面通知（采用 `osascript` `on run argv` 安全传参，短对话零打扰）。
 
-[Unreleased]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.0.3...v1.1.0
 [1.0.3]: https://github.com/Embarrassedfisherman/agy-milestone-progress/releases/tag/v1.0.3
 [1.0.2]: https://github.com/Embarrassedfisherman/agy-milestone-progress/commits/main

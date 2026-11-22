@@ -21,7 +21,7 @@ and append a new row to the verification log below (plus any discovered regressi
 | **Python** | `3.9+` (tested: `3.9.6` on stock macOS) | Zero third-party dependencies (standard library only). Keep strict `3.9` runtime syntax compatibility (`from __future__ import annotations`, avoid runtime `int \| str` or `match/case`). |
 | **macOS** | Full support | Includes native desktop notifications via `osascript` (`on run argv`) and `fcntl.flock` locking |
 | **Linux** | Full core support | `fcntl.flock` supported; desktop notification falls back safely (optional `notify-send` in `v1.1.0`) |
-| **Windows** | Core support (with `python3` caveat) | `fcntl` falls back cleanly; ensure `python3` resolves to real Python 3.9+ in `PATH` (not the Microsoft Store stub) because `hooks.json` invokes `python3 ./hooks/progress_hook.py` via `cmd /c` |
+| **Windows** | Full core support (with `python3` caveat) | Native `msvcrt.locking` concurrency locking (`v1.1.1+`) and UTF-8 stdio; ensure `python3` resolves to real Python 3.9+ in `PATH` (not the Microsoft Store stub) because `hooks.json` invokes `python3 ./hooks/progress_hook.py` via `cmd /c` |
 
 ---
 
@@ -29,6 +29,7 @@ and append a new row to the verification log below (plus any discovered regressi
 
 | Date | Plugin Ver | AGY App | `agy` CLI | OS / Arch | Python | `agy plugin validate --strict` | Hook Live Verified | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 2026-11-22 | `1.1.1` | `2.34.0` | `1.5.13` | macOS / Ubuntu / Windows | `3.9`–`3.13` | Pass (`0 err / 0 warn / 0 notes`) | Yes (26/26 tests + 15/15 CI green) | ✅ Compatible | Added Windows `msvcrt` locking (`BUG-010`) and UTF-8 stdio hardening (`BUG-011`); CI run `44973380299` 15/15 green. |
 | 2026-11-22 | `1.1.0` | `2.34.0` | `1.5.13` | macOS (Darwin arm64) | `3.9.6` | Pass (`0 err / 0 warn / 0 notes`) | Yes (25/25 tests + zip validated) | ✅ Compatible | Multilingual i18n, persistent `config.json`, SVG logo, AGY 2.34 tools & `Stop` error hardening verified. |
 | 2026-11-22 | `1.0.3` | `2.34.0` | `1.5.13` | macOS (Darwin) | `3.9.6` | Pass (`0 err / 0 warn / 1 note: no logo`) | Yes (`d18b7a10...json` live) | ✅ Compatible | Zero breaking changes. Logged non-breaking gaps `BUG-006`–`BUG-009`, all resolved in `v1.1.0`. |
 | 2026-11-20 | `1.0.3` | `2.x` | — | macOS (Darwin) | `3.9+` | — | Yes | ✅ Compatible | Concurrency locking, 512KB reverse scan, 14-day stale cleanup verified. |
