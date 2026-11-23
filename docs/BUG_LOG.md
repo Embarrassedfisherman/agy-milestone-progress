@@ -21,6 +21,7 @@ Structured local tracking registry for all plugin defects (`BUG-NNN`) and upstre
 | `BUG-009` | Hardcoded Chinese strings across Rules, Skill, Hook nudges, and notifications block non-Chinese users | Medium | ✅ Fixed | `v1.0.0` | `v1.1.0` | `test_english_and_japanese_auto_detection_end_to_end` + `tests/test_i18n.py` |
 | `BUG-010` | Windows lacked file locking (`fcntl` unavailable), causing concurrent `PostToolUse` state races | High | ✅ Fixed | `v1.0.3` (caught by Windows CI) | `v1.1.1` | `test_concurrent_post_tool_use_preserves_all_updates` + `test_windows_msvcrt_lock_branch_acquires_and_releases` |
 | `BUG-011` | Windows legacy codepage stdio could fail encoding emoji output in hook and CLI scripts | Medium | ✅ Fixed | `v1.1.0` (hardened for Windows CI) | `v1.1.1` | Windows CI matrix (`doctor.py`, `sync.py`, `release.py`) |
+| `BUG-012` | New AGY `update_focus` / `update_steps` tools lacked labels and triggered false silence nudges when used without chat prose | Medium | ✅ Fixed | `v1.1.1` (AGY `2.34.0`) | `v1.2.0` | `test_native_progress_tools_labels_and_details` + `test_native_progress_tools_exempt_from_silence_nudge` |
 | `UPSTREAM-001` | `initialNumSteps` increments within a turn; protojson omits `0` and may stringify `int64` | Info | 🛡️ Mitigated | AGY `2.x` | Mitigated in `v1.0.1` | `test_changing_initial_num_steps_and_protojson_fields_keep_turn_alive` |
 | `UPSTREAM-002` | `systemMessage.metadata` string values rejected by Go `utils.ScrubInternalFields` | High | 🛡️ Mitigated | AGY `2.x` | Mitigated in `v1.0.2` | `test_safeguard_fires_without_metadata_and_repeats_at_interval` |
 
@@ -91,6 +92,13 @@ Structured local tracking registry for all plugin defects (`BUG-NNN`) and upstre
 - **Environment**: Windows (`cp1252` / legacy console encoding)
 - **Symptom**: Writing emoji/Unicode status lines from `progress_hook.py`, `doctor.py`, `sync.py`, or `release.py` to non-UTF-8 Windows stdio can raise `UnicodeEncodeError`.
 - **Resolution**: Explicitly reconfigured `sys.stdin` / `sys.stdout` / `sys.stderr` to UTF-8 (`errors="replace"`) in CLI entrypoints and passed `encoding="utf-8"` in subprocess unit tests.
+
+### BUG-012 — Missing Labels & False Silence Nudges for AGY `update_focus` / `update_steps`
+- **Status**: ✅ Fixed in `v1.2.0`
+- **Environment**: Antigravity App `2.34.0` / CLI `1.5.13`
+- **Symptom**: Antigravity's native progress tools (`update_focus`, `update_steps`) fell back to generic `🔧` labels, and invocations using them cleanly without extra chat prose were still counted as silent by `PreInvocation`, triggering conflicting `[Progress Reminder]` nudges.
+- **Root Cause**: `TOOL_CATEGORIES` and locale packs omitted both tools, and `_handle_pre_invocation()` checked only `PLANNER_RESPONSE.content` in `transcript.jsonl`.
+- **Resolution**: Added `update_focus` / `update_steps` labels and detail extraction, marked successful calls via a lock-protected `progress_reported` flag to reset `silent_invocations`, captured `steps_snapshot` to enrich `Stop` desktop notifications, and added regression tests (`test_native_progress_tools_labels_and_details`, `test_native_progress_tools_exempt_from_silence_nudge`, `test_stop_notification_enriches_with_update_steps_snapshot`).
 
 ---
 

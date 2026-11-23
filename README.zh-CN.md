@@ -5,9 +5,9 @@
 [![CI](https://github.com/Embarrassedfisherman/agy-milestone-progress/actions/workflows/ci.yml/badge.svg)](https://github.com/Embarrassedfisherman/agy-milestone-progress/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB.svg)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/Version-1.1.1-10B981.svg)](./CHANGELOG.zh-CN.md)
+[![Version](https://img.shields.io/badge/Version-1.2.0-10B981.svg)](./CHANGELOG.zh-CN.md)
 
-面向 **Google Antigravity（AGY）** 的全局透明执行与分阶段里程碑控制插件（当前版本：`v1.1.1`），原生支持**多语言自动适配**（规则层自动跟随任意对话语言，Hook 内置 `en` / `zh` / `ja` 语言包并支持轻松扩展）。
+面向 **Google Antigravity（AGY）** 的全局分阶段里程碑控场与桌面通知增强插件（当前版本：`v1.2.0`），与新版 AGY 原生进度 UI（`update_focus` / `update_steps`）无缝协同，原生支持**多语言自动适配**（规则层自动跟随任意对话语言，Hook 内置 `en` / `zh` / `ja` 语言包并支持轻松扩展）。
 
 用于解决大型项目任务中「发送提示词后黑盒思考几十分钟、折叠区全是底层工具参数、无法直观判断实时进展与所处阶段」的核心痛点。
 
@@ -67,10 +67,10 @@ python3 scripts/sync.py --clean
 
 | 层级 | 组件 | 解决的问题 | 实际表现 |
 | :--- | :--- | :--- | :--- |
-| **规则层** | [rules/AGENTS.md](./rules/AGENTS.md) | 避免大任务一镜到底盲跑 & 全程躲在 `<thinking>` | 1. **语言自适应**：自动匹配用户当前对话语言输出播报与卡片。<br>2. **智能分流**：`<= 2` 文件或简单问答直接完成；`>= 3` 文件或跨模块任务自动进入里程碑模式。<br>3. **实时行内播报**：多步工具调用前直接在正文中输出一行简短状态。<br>4. **单阶段暂停汇报**：维护 `task.md` 进度清单，每回合最多执行 1 个子模块，结束输出 5 项标准进度卡片等待确认。 |
-| **技能层** | [skills/milestone-mode/SKILL.md](./skills/milestone-mode/SKILL.md) | 需要随时手动强制开启严格分阶段控制 | 在聊天框输入 `/milestone-mode` 即可显式激活。 |
-| **守护层** | [hooks/progress_hook.py](./hooks/progress_hook.py)、[hooks/i18n.py](./hooks/i18n.py)、[hooks/locales/](./hooks/locales/) | 防止模型忘记播报或单阶段失控长跑 | 1. **3 轮静默提醒**：倒序分块扫描 `transcript.jsonl`（每块 `32 KB`，上限 `512 KB`），连续 `3` 轮无可见正文输出时自动注入本地化 `[Progress Reminder]`。<br>2. **12 轮硬刹车**：单回合连续调用达 `12` 轮（之后每 `4` 轮）时注入 `[Progress Guardian]` 要求安全收尾并汇报。 |
-| **通知层** | [hooks/progress_hook.py](./hooks/progress_hook.py) (`Stop`) | 执行子模块期间切走窗口，不知道何时停下等确认 | 仅当回合满足非平凡条件（`>= 3` 轮调用、`>= 3` 次工具操作、`>= 15s` 耗时或出错停止，且非 `USER_CANCELED`）时弹出本地化桌面通知；短问答零打扰。 |
+| **规则层** | [rules/AGENTS.md](./rules/AGENTS.md) | 避免大任务一镜到底盲跑 & 与官方进度 UI 协同 | 1. **语言自适应**：自动匹配用户当前对话语言输出播报与卡片。<br>2. **智能分流**：`<= 2` 文件或简单问答直接完成；`>= 3` 文件或跨模块任务自动进入里程碑模式。<br>3. **原生进度优先**：日常状态与步骤条交给 AGY 原生 `update_focus` / `update_steps`，不再双重刷屏或默认强制写 `task.md`（规则预算瘦身约 29%）。<br>4. **单阶段强停汇报**：每回合最多执行 1 个子模块，结束输出 5 项标准进度卡片等待确认。 |
+| **技能层** | [skills/milestone-mode/SKILL.md](./skills/milestone-mode/SKILL.md) | 需要随时手动强制开启严格分阶段控制 | 在聊天框输入 `/milestone-mode` 即可显式激活，配合 `update_steps` / `update_focus` 强制每回合 1 里程碑。 |
+| **守护层** | [hooks/progress_hook.py](./hooks/progress_hook.py)、[hooks/i18n.py](./hooks/i18n.py)、[hooks/locales/](./hooks/locales/) | 防止模型黑盒盲跑或单阶段失控死循环 | 1. **原生感知静默提醒**：识别 `update_focus` / `update_steps` 为有效进度同步（不与官方 UI 冲突），并倒序分块扫描 `transcript.jsonl`（上限 `512 KB`）；连续 `3` 轮既无正文又无原生进度更新时注入本地化 `[Progress Reminder]`。<br>2. **12 轮硬刹车**：单回合连续调用达 `12` 轮（之后每 `4` 轮）时注入 `[Progress Guardian]` 要求安全收尾并汇报。 |
+| **通知层** | [hooks/progress_hook.py](./hooks/progress_hook.py) (`Stop`) | 切走窗口时第一时间获悉真实阶段进度 | 自动读取本回合最新 `update_steps` 快照，桌面通知直接显示步数与已完成步骤（如 `⏸️ 阶段完成 (2/4 步)` + `已完成「...」`）；仅在非平凡回合或出错暂停时弹出，短问答零打扰。 |
 
 ---
 
@@ -122,7 +122,7 @@ python3 scripts/sync.py --clean
 ## 5. 常用开发、体检与发版命令
 
 ```bash
-# 运行全部 25 项单元测试（Hook、多语言一致性、仓库完整性与 Python 3.9 语法守卫）
+# 运行全部 29 项单元测试（Hook、多语言一致性、仓库完整性与 Python 3.9 语法守卫）
 python3 -m unittest discover -s tests -v
 
 # 一键体检本地环境、同步状态与 AGY 兼容性

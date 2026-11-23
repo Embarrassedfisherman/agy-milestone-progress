@@ -473,6 +473,255 @@ class ProgressHookTests(unittest.TestCase):
             ],
         )
 
+    def test_native_progress_tools_labels_and_details(self) -> None:
+        focus_call = {"name": "update_focus", "args": {"focus": "Inspecting auth token refresh flow"}}
+        cat_en, label_en = progress_hook._describe_tool(focus_call, "", "", "en")
+        self.assertEqual(cat_en, "progress")
+        self.assertEqual(label_en, "🎯 Update focus `Inspecting auth token refre…`")
+
+        cat_zh, label_zh = progress_hook._describe_tool(
+            {"name": "update_focus", "args": {"focus": "核对插件兼容性"}}, "", "", "zh"
+        )
+        self.assertEqual(cat_zh, "progress")
+        self.assertEqual(label_zh, "🎯 更新状态摘要 `核对插件兼容性`")
+
+        steps_call = {
+            "name": "update_steps",
+            "args": {
+                "steps": [
+                    {"title": "Refactor rules", "status": "done"},
+                    {"title": "Upgrade hook", "status": "done"},
+                    {"title": "Update docs", "status": "in_progress"},
+                    {"title": "Sync locally", "status": "pending"},
+                ]
+            },
+        }
+        cat_s_en, label_s_en = progress_hook._describe_tool(steps_call, "", "", "en")
+        self.assertEqual(cat_s_en, "progress")
+        self.assertEqual(label_s_en, "📋 Update steps `2/4`")
+
+        cat_s_ja, label_s_ja = progress_hook._describe_tool(steps_call, "", "", "ja")
+        self.assertEqual(cat_s_ja, "progress")
+        self.assertEqual(label_s_ja, "📋 ステップ更新 `2/4`")
+
+    def test_native_progress_tools_exempt_from_silence_nudge(self) -> None:
+        conv_id = "conv-native-progress"
+        self._event("SessionStart", 1200.0, conversationId=conv_id)
+        self.assertEqual(self._event("PreInvocation", 1200.0, conversationId=conv_id), {"injectSteps": []})
+
+        # Two silent invocations
+        for idx in range(1, 3):
+            self._append_planner_step("")
+            self._event(
+                "PostToolUse",
+                1200.0 + idx,
+                conversationId=conv_id,
+                toolCall={"name": "read_file", "args": {"Path": f"/repo/f{idx}.py"}},
+            )
+            self.assertEqual(
+                self._event("PreInvocation", 1200.5 + idx, conversationId=conv_id, invocationNum=idx),
+                {"injectSteps": []},
+            )
+
+        # Third invocation uses update_focus (no visible text) -> must reset silence instead of nudging
+        self._append_planner_step("")
+        self._event(
+            "PostToolUse",
+            1203.0,
+            conversationId=conv_id,
+            toolCall={"name": "update_focus", "args": {"focus": "Editing hook logic"}},
+        )
+        self._event(
+            "PostToolUse",
+            1203.1,
+            conversationId=conv_id,
+            toolCall={"name": "edit_file", "args": {"Path": "/repo/hook.py"}},
+        )
+        self.assertEqual(
+            self._event("PreInvocation", 1203.5, conversationId=conv_id, invocationNum=3),
+            {"injectSteps": []},
+        )
+        self.assertEqual(progress_hook._load_state(conv_id)["silent_invocations"], 0)
+
+        # update_steps also counts as progress sync
+        self._append_planner_step("")
+        self._event(
+            "PostToolUse",
+            1204.0,
+            conversationId=conv_id,
+            toolCall={
+                "name": "update_steps",
+                "args": {"steps": [{"title": "Edit hook", "status": "in_progress"}]},
+            },
+        )
+        self.assertEqual(
+            self._event("PreInvocation", 1204.5, conversationId=conv_id, invocationNum=4),
+            {"injectSteps": []},
+        )
+        self.assertEqual(progress_hook._load_state(conv_id)["silent_invocations"], 0)
+
+        # A failed update_focus must NOT exempt silence; 3 consecutive truly silent invocations still nudge
+        self._append_planner_step("")
+        self._event(
+            "PostToolUse",
+            1205.0,
+            conversationId=conv_id,
+            error="invalid schema",
+            toolCall={"name": "update_focus", "args": {"focus": "bad"}},
+        )
+        self.assertEqual(
+            self._event("PreInvocation", 1205.5, conversationId=conv_id, invocationNum=5),
+            {"injectSteps": []},
+        )
+        self.assertEqual(progress_hook._load_state(conv_id)["silent_invocations"], 1)
+
+        self._append_planner_step("")
+        self._event(
+            "PostToolUse",
+            1206.0,
+            conversationId=conv_id,
+            toolCall={"name": "edit_file", "args": {"Path": "/repo/a.py"}},
+        )
+        self.assertEqual(
+            self._event("PreInvocation", 1206.5, conversationId=conv_id, invocationNum=6),
+            {"injectSteps": []},
+        )
+
+        self._append_planner_step("")
+        self._event(
+            "PostToolUse",
+            1207.0,
+            conversationId=conv_id,
+            toolCall={"name": "run_command", "args": {"CommandLine": "pytest"}},
+        )
+        res_nudge = self._event("PreInvocation", 1207.5, conversationId=conv_id, invocationNum=7)
+        self.assertEqual(len(res_nudge["injectSteps"]), 1)
+        msg = res_nudge["injectSteps"][0]["systemMessage"]["systemMessage"]
+        self.assertIn("Progress Reminder", msg)
+        self.assertIn("update_focus / update_steps", msg)
+
+    def test_stop_notification_enriches_with_update_steps_snapshot(self) -> None:
+        # 1. Chinese session with out-of-order newly completed step
+        zh_conv = "conv-steps-zh"
+        self._event("SessionStart", 1300.0, conversationId=zh_conv, lastUserInput="重构权限模块")
+        self._event("PreInvocation", 1300.0, conversationId=zh_conv, lastUserInput="重构权限模块")
+        self._event(
+            "PostToolUse",
+            1302.0,
+            conversationId=zh_conv,
+            lastUserInput="重构权限模块",
+            toolCall={
+                "name": "update_steps",
+                "args": {
+                    "steps": [
+                        {"title": "收紧鉴权策略", "status": "done"},
+                        {"title": "验证双角色测试", "status": "in_progress"},
+                        {"title": "清理旧缓存", "status": "done"},
+                    ]
+                },
+            },
+        )
+        self._event(
+            "PostToolUse",
+            1305.0,
+            conversationId=zh_conv,
+            lastUserInput="重构权限模块",
+            toolCall={
+                "name": "update_steps",
+                "args": {
+                    "steps": [
+                        {"title": "收紧鉴权策略", "status": "done"},
+                        {"title": "验证双角色测试", "status": "done"},
+                        {"title": "清理旧缓存", "status": "done"},
+                    ]
+                },
+            },
+        )
+        self._event(
+            "PostToolUse",
+            1306.0,
+            conversationId=zh_conv,
+            lastUserInput="重构权限模块",
+            toolCall={"name": "run_command", "args": {"toolSummary": "Run tests"}},
+        )
+        with mock.patch.object(progress_hook, "_send_desktop_notification") as notify_zh:
+            self._event("Stop", 1320.0, conversationId=zh_conv, lastUserInput="", terminationReason="NO_TOOL_CALL")
+        notify_zh.assert_called_once()
+        _, sub_zh, body_zh = notify_zh.call_args.args
+        self.assertEqual(sub_zh, "⏸️ 阶段完成 (3/3 步)")
+        self.assertIn("已完成「验证双角色测试」", body_zh)
+        self.assertIn("3 次操作", body_zh)
+
+        # 2. English session with only in_progress step (0 done)
+        en_conv = "conv-steps-en"
+        self._event("SessionStart", 1400.0, conversationId=en_conv, lastUserInput="Audit auth flow")
+        self._event("PreInvocation", 1400.0, conversationId=en_conv, lastUserInput="Audit auth flow")
+        self._event(
+            "PostToolUse",
+            1405.0,
+            conversationId=en_conv,
+            lastUserInput="Audit auth flow",
+            toolCall={
+                "name": "update_steps",
+                "args": {
+                    "steps": [
+                        {"title": "Verify Console build tests", "status": "in_progress"},
+                        {"title": "Merge fix into dev", "status": "pending"},
+                    ]
+                },
+            },
+        )
+        with mock.patch.object(progress_hook, "_send_desktop_notification") as notify_en:
+            self._event("Stop", 1420.0, conversationId=en_conv, lastUserInput="", terminationReason="NO_TOOL_CALL")
+        notify_en.assert_called_once()
+        _, sub_en, body_en = notify_en.call_args.args
+        self.assertEqual(sub_en, "⏸️ Milestone ready (0/2 steps)")
+        self.assertIn('In progress: "Verify Console build tests"', body_en)
+
+        # 3. Japanese error stop with step progress
+        ja_conv = "conv-steps-ja"
+        self._event("SessionStart", 1500.0, conversationId=ja_conv, lastUserInput="テストを修正して")
+        self._event("PreInvocation", 1500.0, conversationId=ja_conv, lastUserInput="テストを修正して")
+        self._event(
+            "PostToolUse",
+            1502.0,
+            conversationId=ja_conv,
+            lastUserInput="テストを修正して",
+            toolCall={
+                "name": "update_steps",
+                "args": {
+                    "steps": [
+                        {"title": "設定を確認", "status": "done"},
+                        {"title": "統合テスト実行", "status": "failed"},
+                    ]
+                },
+            },
+        )
+        with mock.patch.object(progress_hook, "_send_desktop_notification") as notify_ja:
+            self._event("Stop", 1505.0, conversationId=ja_conv, lastUserInput="", terminationReason="ERROR")
+        notify_ja.assert_called_once()
+        _, sub_ja, body_ja = notify_ja.call_args.args
+        self.assertEqual(sub_ja, "⚠️ エラー等で一時停止 (1/2 ステップ)")
+        self.assertIn("「設定を確認」完了", body_ja)
+
+        # 4. Malformed update_steps payload safely falls back to classic notification
+        bad_conv = "conv-steps-bad"
+        self._event("SessionStart", 1600.0, conversationId=bad_conv, lastUserInput="Run build")
+        self._event("PreInvocation", 1600.0, conversationId=bad_conv, lastUserInput="Run build")
+        self._event(
+            "PostToolUse",
+            1601.0,
+            conversationId=bad_conv,
+            lastUserInput="Run build",
+            toolCall={"name": "update_steps", "args": {"steps": "not-a-list"}},
+        )
+        with mock.patch.object(progress_hook, "_send_desktop_notification") as notify_bad:
+            self._event("Stop", 1620.0, conversationId=bad_conv, lastUserInput="", terminationReason="NO_TOOL_CALL")
+        notify_bad.assert_called_once()
+        _, sub_bad, body_bad = notify_bad.call_args.args
+        self.assertEqual(sub_bad, "⏸️ Milestone ready · Review & confirm")
+        self.assertEqual(body_bad, "1 tool calls in 20s.")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -10,6 +10,22 @@
 
 ---
 
+## [1.2.0] - 2026-11-23
+
+### 新增
+- **步骤感知桌面通知**：`PostToolUse` 自动捕获本回合最新 `update_steps` 进度快照（支持识别乱序新完成步骤），让 `Stop` 桌面通知在 `en` / `zh` / `ja` 三语下直接展示 `(done/total)` 进度与刚完成/进行中的步骤名称（未使用或入参异常时平滑回退原格式）。
+- **AGY 原生进度工具适配（`BUG-012`）**：在 `hooks/progress_hook.py` 与三语词典中补齐 `update_focus` / `update_steps` 的工具分类、本地化标签及参数摘要提取（焦点截断与 `done/total` 比例）。
+- 在 `tests/test_progress_hook.py` 新增 3 组回归测试（全量测试扩充至 **29 项**）。
+
+### 变更
+- **规则层与技能层原生协同瘦身**：重构 `rules/AGENTS.md`（体积从 `4,255` 字节压缩至 `3,023` 字节，节省约 29% 全局规则预算）与 `skills/milestone-mode/SKILL.md`，将日常折叠摘要与实时步骤条交棒给 AGY 原生 `update_focus` / `update_steps`，取消默认强制写 `task.md` 与高频正文刷屏，聚焦保留每回合 1 里程碑强停与 5 项进度汇报卡。
+- 更新 `en` / `zh` / `ja` 三语下的 `[Progress Reminder]` 与 `[Progress Guardian]` 引导文案，协同原生 `update_focus` / `update_steps`。
+
+### 修复
+- 将成功执行的 `update_focus` / `update_steps` 纳入非静默进度同步判定，修复模型使用官方进度 UI 但未输出冗余正文时触发 `[Progress Reminder]` 误报的问题（`BUG-012`）。
+
+---
+
 ## [1.1.1] - 2026-11-22
 
 ### 修复
@@ -86,7 +102,8 @@
 - 实现任务复杂度智能阈值分流（短问答直出，多模块任务自动进入分阶段里程碑暂停模式）。
 - 实现 macOS 非平凡回合完成桌面通知（采用 `osascript` `on run argv` 安全传参，短对话零打扰）。
 
-[Unreleased]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.0.3...v1.1.0
 [1.0.3]: https://github.com/Embarrassedfisherman/agy-milestone-progress/releases/tag/v1.0.3

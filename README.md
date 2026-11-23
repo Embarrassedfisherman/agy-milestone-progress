@@ -5,9 +5,9 @@
 [![CI](https://github.com/Embarrassedfisherman/agy-milestone-progress/actions/workflows/ci.yml/badge.svg)](https://github.com/Embarrassedfisherman/agy-milestone-progress/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB.svg)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/Version-1.1.1-10B981.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.2.0-10B981.svg)](./CHANGELOG.md)
 
-A global **Antigravity (AGY)** plugin that brings **transparent execution, phased milestone checkpoints, silent-loop guardrails, and completion notifications** to long-running AI agent tasks—with built-in **multilingual support** (`en`, `zh`, `ja`, and auto-adaptive rules for any conversation language).
+A global **Antigravity (AGY)** plugin that pairs seamlessly with Antigravity's native progress UI (`update_focus` / `update_steps`) to add **phased milestone checkpoints, one-milestone-per-turn pacing, silent-loop guardrails, and step-aware desktop notifications**—with built-in **multilingual support** (`en`, `zh`, `ja`, and auto-adaptive rules for any conversation language).
 
 It solves a common pain point on large projects: sending a prompt and watching the agent silently chain tool calls for 20+ minutes inside collapsed `<thinking>` blocks with no clear picture of current progress, phase boundaries, or when your input is needed.
 
@@ -68,10 +68,10 @@ Download `milestone-progress-vX.Y.Z.zip` from [GitHub Releases](https://github.c
 
 | Layer | File(s) | Purpose | Behavior |
 | :--- | :--- | :--- | :--- |
-| **Rules** | [rules/AGENTS.md](./rules/AGENTS.md) | Smart scoping, live narration & phase boundaries | 1. **Language-Adaptive**: Automatically responds in your conversation language.<br>2. **Smart Threshold**: Quick Q&A / edits (`<= 2` files, `<= 4` steps) run directly; `3+` files or multi-module tasks enter Phased Milestone Mode.<br>3. **Live Narration**: Outputs 1 concise visible status sentence before multi-step tool batches.<br>4. **One Milestone Per Turn**: Maintains `task.md` Artifact and ends each milestone with a 5-item plain-language checkpoint card. |
-| **Skill** | [skills/milestone-mode/SKILL.md](./skills/milestone-mode/SKILL.md) | On-demand strict milestone control | Type `/milestone-mode` in chat anytime to enforce strict phased checkpoints. |
-| **Guardrail Hook** | [hooks/progress_hook.py](./hooks/progress_hook.py), [hooks/i18n.py](./hooks/i18n.py), [hooks/locales/](./hooks/locales/) | Prevent silent black-box runs & runaway loops | 1. **Silent Nudge** (`PreInvocation` + `PostToolUse`): Reverse-scans up to `512 KB` of `transcript.jsonl` (`32 KB` chunks). After `3` consecutive silent tool-calling invocations, injects a localized `[Progress Reminder]` prompting visible narration.<br>2. **Hard Safeguard**: At invocation `12` (and every `4` thereafter), injects `[Progress Guardian]` instructing the agent to wrap up safely and report. |
-| **Notification Hook** | [hooks/progress_hook.py](./hooks/progress_hook.py) (`Stop`) | Alert you when a real milestone pauses while you are in another window | Fires a localized desktop notification only on non-trivial turns (`>= 3` invocations, `>= 3` tool calls, `>= 15s` elapsed, or error stops — never on `USER_CANCELED` or short Q&A). |
+| **Rules** | [rules/AGENTS.md](./rules/AGENTS.md) | Smart scoping, native-UI synergy & phase boundaries | 1. **Language-Adaptive**: Automatically responds in your conversation language.<br>2. **Smart Threshold**: Quick Q&A / edits (`<= 2` files, `<= 4` steps) run directly; `3+` files or multi-module tasks enter Phased Milestone Mode.<br>3. **Native-First Progress**: Delegates routine status/checklists to AGY's native `update_focus` and `update_steps` without double-spamming chat or forcing redundant `task.md` writes (~29% leaner rule budget).<br>4. **One Milestone Per Turn**: Enforces a hard pause after each cohesive submodule with a 5-item plain-language checkpoint card. |
+| **Skill** | [skills/milestone-mode/SKILL.md](./skills/milestone-mode/SKILL.md) | On-demand strict milestone control | Type `/milestone-mode` in chat anytime to enforce strict one-milestone-per-turn checkpoints paired with `update_steps` / `update_focus`. |
+| **Guardrail Hook** | [hooks/progress_hook.py](./hooks/progress_hook.py), [hooks/i18n.py](./hooks/i18n.py), [hooks/locales/](./hooks/locales/) | Prevent silent black-box runs & runaway loops | 1. **Native-Aware Silent Nudge** (`PreInvocation` + `PostToolUse`): Recognizes `update_focus` / `update_steps` as valid progress sync (no false alarms against official UI) and reverse-scans up to `512 KB` of `transcript.jsonl`. After `3` truly silent invocations, injects a localized `[Progress Reminder]`.<br>2. **Hard Safeguard**: At invocation `12` (and every `4` thereafter), injects `[Progress Guardian]` instructing the agent to wrap up safely and report. |
+| **Notification Hook** | [hooks/progress_hook.py](./hooks/progress_hook.py) (`Stop`) | Alert you with real step progress while you are in another window | Captures the latest `update_steps` snapshot so desktop notifications show exact progress (e.g., `⏸️ Milestone ready (2/4 steps)` + newly completed step title), firing only on non-trivial turns (`>= 3` invocations, `>= 3` tool calls, `>= 15s` elapsed, or error stops — never on `USER_CANCELED` or short Q&A). |
 
 ---
 
@@ -128,7 +128,7 @@ agy-milestone-progress/
 │   ├── sync.py / sync.sh            # Cross-platform test + validate + sync installer
 │   ├── doctor.py                    # Local health & AGY compatibility diagnostics
 │   └── release.py                   # Safe release preflight, version bump & zip packager
-├── tests/                           # 25 unit, i18n-parity & repo-integrity tests
+├── tests/                           # 29 unit, i18n-parity & repo-integrity tests
 ├── CHANGELOG.md / CHANGELOG.zh-CN.md
 ├── CONTRIBUTING.md / SECURITY.md
 └── docs/

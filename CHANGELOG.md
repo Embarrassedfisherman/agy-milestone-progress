@@ -11,6 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.0] - 2026-11-23
+
+### Added
+- **Step-aware desktop notifications**: `PostToolUse` now captures the latest `update_steps` progress snapshot (including newly completed out-of-order step detection), upgrading `Stop` notifications across `en` / `zh` / `ja` to display `(done/total)` progress counts and the completed or active step title (with safe fallback when `update_steps` is unused or malformed).
+- **AGY native progress tool support (`BUG-012`)**: Added `update_focus` and `update_steps` categories, localized labels (`en`/`zh`/`ja`), and argument detail extraction (`focus` truncation and `done/total` ratio) in `hooks/progress_hook.py`.
+- Added 3 regression test suites in `tests/test_progress_hook.py` (growing the suite from 26 to **29 tests**).
+
+### Changed
+- **Native-first rule & skill slim-down**: Refactored `rules/AGENTS.md` (trimmed from `4,255` B to `3,023` B, ~29% lighter on AGY's global rules budget) and `skills/milestone-mode/SKILL.md` to delegate routine live status/checklists to AGY's native `update_focus` / `update_steps` instead of double-spamming chat or forcing default `task.md` writes, while keeping one-milestone-per-turn pacing and the 5-item checkpoint card front and center.
+- Updated `[Progress Reminder]` and `[Progress Guardian]` prompts across `en` / `zh` / `ja` to recognize and guide `update_focus` / `update_steps`.
+
+### Fixed
+- Exempted successful `update_focus` / `update_steps` tool calls from `silent_invocations` counting in `hooks/progress_hook.py` so agents using AGY's native progress UI without redundant chat prose no longer receive false `[Progress Reminder]` nudges (`BUG-012`).
+
+---
+
 ## [1.1.1] - 2026-11-22
 
 ### Fixed
@@ -87,7 +103,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Smart task-size threshold separating quick Q&A/minor edits from multi-module phased milestone execution.
 - Non-trivial turn completion notifications on macOS via safe `osascript` `on run argv` parameter passing.
 
-[Unreleased]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.0.3...v1.1.0
 [1.0.3]: https://github.com/Embarrassedfisherman/agy-milestone-progress/releases/tag/v1.0.3

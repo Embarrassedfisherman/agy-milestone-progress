@@ -87,7 +87,11 @@ TOOL_CATEGORIES: dict[str, str] = {
     "search_marketplace": "plugin",
     "list_plugin_accounts": "plugin",
     "ask_question": "ui",
+    "update_focus": "progress",
+    "update_steps": "progress",
 }
+
+PROGRESS_SYNC_TOOLS = frozenset({"update_focus", "update_steps"})
 
 ARTIFACT_NAMES = frozenset({"task.md", "implementation_plan.md", "walkthrough.md", "PROGRESS.md"})
 
@@ -292,6 +296,8 @@ def _default_state() -> dict[str, Any]:
         "turn_start_ts": 0.0,
         "turn_invocations": 0,
         "silent_invocations": 0,
+        "progress_reported": False,
+        "steps_snapshot": None,
         "total_tools": 0,
         "pending_actions": [],
         "last_warned_inv": 0,
@@ -357,6 +363,74 @@ def _extract_file_path(args: dict[str, Any]) -> str:
         if isinstance(val, str) and val.strip():
             return val.strip()
     return ""
+
+
+def _extract_steps_snapshot(
+    args: dict[str, Any], prev_snapshot: dict[str, Any] | None = None
+) -> dict[str, Any] | None:
+    raw_steps = args.get("steps")
+    if not isinstance(raw_steps, list) or not raw_steps:
+        return None
+
+    total = 0
+    done = 0
+    in_progress = 0
+    failed = 0
+    skipped = 0
+    done_titles: list[str] = []
+    first_active = ""
+    first_failed = ""
+
+    for item in raw_steps:
+        if not isinstance(item, dict):
+            continue
+        raw_title = item.get("title")
+        if not isinstance(raw_title, str) or not raw_title.strip():
+            continue
+        title = _short_text(raw_title, 48)
+        status = str(item.get("status") or "pending").strip().lower()
+        total += 1
+        if status == "done":
+            done += 1
+            done_titles.append(title)
+        elif status == "in_progress":
+            in_progress += 1
+            if not first_active:
+                first_active = title
+        elif status == "failed":
+            failed += 1
+            if not first_failed:
+                first_failed = title
+        elif status == "skipped":
+            skipped += 1
+
+    if total == 0:
+        return None
+
+    prev_done: set[str] = set()
+    if isinstance(prev_snapshot, dict):
+        raw_prev = prev_snapshot.get("done_titles")
+        if isinstance(raw_prev, list):
+            prev_done = {t for t in raw_prev if isinstance(t, str)}
+
+    newly_done = [t for t in done_titles if t not in prev_done]
+    if newly_done:
+        last_done_title = newly_done[-1]
+    elif done_titles:
+        last_done_title = done_titles[-1]
+    else:
+        last_done_title = ""
+
+    return {
+        "total": total,
+        "done": done,
+        "in_progress": in_progress,
+        "failed": failed,
+        "skipped": skipped,
+        "done_titles": done_titles[:12],
+        "last_done_title": last_done_title,
+        "active_title": first_active or first_failed,
+    }
 
 
 def _describe_tool(
@@ -432,6 +506,14 @@ def _describe_tool(
         queries = args.get("queries")
         if isinstance(queries, list) and queries and isinstance(queries[0], str) and queries[0].strip():
             detail = f" `{_short_text(queries[0], 24)}`"
+    elif name == "update_focus":
+        focus = args.get("focus") or ""
+        if isinstance(focus, str) and focus.strip():
+            detail = f" `{_short_text(focus, 28)}`"
+    elif name == "update_steps":
+        snap = _extract_steps_snapshot(args)
+        if snap is not None:
+            detail = f" `{snap['done']}/{snap['total']}`"
 
     label = f"{prefix}{detail}"
     if error:
@@ -575,6 +657,20 @@ def _handle_post_tool_use(payload: dict[str, Any], now: float, cfg: dict[str, An
         state["lang"] = lang
         category, label = _describe_tool(tool_call, artifact_dir, error, lang)
 
+        tool_name = str(tool_call.get("name") or "").strip()
+        tool_args = tool_call.get("args")
+        if not error and tool_name in PROGRESS_SYNC_TOOLS:
+            state["progress_reported"] = True
+            if tool_name == "update_steps" and isinstance(tool_args, dict):
+                prev_snap = (
+                    state.get("steps_snapshot")
+                    if isinstance(state.get("steps_snapshot"), dict)
+                    else None
+                )
+                snap = _extract_steps_snapshot(tool_args, prev_snap)
+                if snap is not None:
+                    state["steps_snapshot"] = snap
+
         state["total_tools"] = int(state.get("total_tools", 0)) + 1
         pending = state.get("pending_actions")
         if not isinstance(pending, list):
@@ -620,7 +716,9 @@ def _handle_pre_invocation(payload: dict[str, Any], now: float, cfg: dict[str, A
 
         inv_count = state["turn_invocations"]
         if inv_count > 1:
-            if _last_planner_had_visible_text(transcript_path):
+            reported_via_tool = bool(state.get("progress_reported"))
+            state["progress_reported"] = False
+            if reported_via_tool or _last_planner_had_visible_text(transcript_path):
                 state["silent_invocations"] = 0
                 state["pending_actions"] = []
             else:
@@ -709,6 +807,60 @@ def _send_desktop_notification(title: str, subtitle: str, message: str) -> None:
         _send_linux_notification(title, subtitle, message)
 
 
+def _build_stop_notification_text(
+    lang: str,
+    is_error: bool,
+    tool_count: int,
+    elapsed_str: str,
+    steps_snapshot: Any,
+) -> tuple[str, str]:
+    if isinstance(steps_snapshot, dict) and int(steps_snapshot.get("total", 0)) > 0:
+        done = int(steps_snapshot.get("done", 0))
+        total = int(steps_snapshot.get("total", 0))
+        subtitle_key = "notify_subtitle_error_steps" if is_error else "notify_subtitle_done_steps"
+        subtitle = i18n.get_text(lang, "messages", subtitle_key, done=done, total=total)
+        last_done = str(steps_snapshot.get("last_done_title") or "").strip()
+        active_title = str(steps_snapshot.get("active_title") or "").strip()
+        if last_done:
+            message = i18n.get_text(
+                lang,
+                "messages",
+                "notify_body_with_step",
+                step=last_done,
+                tool_count=tool_count,
+                elapsed=elapsed_str,
+            )
+        elif active_title:
+            message = i18n.get_text(
+                lang,
+                "messages",
+                "notify_body_with_active_step",
+                step=active_title,
+                tool_count=tool_count,
+                elapsed=elapsed_str,
+            )
+        else:
+            message = i18n.get_text(
+                lang,
+                "messages",
+                "notify_body",
+                tool_count=tool_count,
+                elapsed=elapsed_str,
+            )
+        return subtitle, message
+
+    subtitle_key = "notify_subtitle_error" if is_error else "notify_subtitle_done"
+    subtitle = i18n.get_text(lang, "messages", subtitle_key)
+    message = i18n.get_text(
+        lang,
+        "messages",
+        "notify_body",
+        tool_count=tool_count,
+        elapsed=elapsed_str,
+    )
+    return subtitle, message
+
+
 def _handle_stop(payload: dict[str, Any], now: float, cfg: dict[str, Any]) -> dict[str, Any]:
     conv_id = str(payload.get("conversationId") or "default")
     with _conversation_lock(conv_id):
@@ -716,6 +868,7 @@ def _handle_stop(payload: dict[str, Any], now: float, cfg: dict[str, Any]) -> di
         elapsed = (now - float(state.get("turn_start_ts") or now)) if state.get("turn_start_ts") else 0.0
         inv_count = int(state.get("turn_invocations", 0))
         tool_count = int(state.get("total_tools", 0))
+        steps_snapshot = state.get("steps_snapshot")
         lang = _resolve_turn_lang(payload, state, cfg)
         reset_state = _default_state()
         reset_state["lang"] = lang
@@ -737,14 +890,12 @@ def _handle_stop(payload: dict[str, Any], now: float, cfg: dict[str, Any]) -> di
         default_session = i18n.get_text(lang, "labels", "default_session", default="Current session")
         project_name = os.path.basename(cwd.rstrip("/\\")) if cwd else default_session
         title = i18n.get_text(lang, "messages", "notify_title", project=project_name)
-        subtitle_key = "notify_subtitle_error" if is_error else "notify_subtitle_done"
-        subtitle = i18n.get_text(lang, "messages", subtitle_key)
-        message = i18n.get_text(
+        subtitle, message = _build_stop_notification_text(
             lang,
-            "messages",
-            "notify_body",
-            tool_count=tool_count,
-            elapsed=_format_duration(elapsed),
+            is_error,
+            tool_count,
+            _format_duration(elapsed),
+            steps_snapshot,
         )
         _send_desktop_notification(title, subtitle, message)
 

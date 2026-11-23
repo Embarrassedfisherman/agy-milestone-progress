@@ -35,7 +35,9 @@
     "read_resource": "🔌 Read MCP resource",
     "search_marketplace": "🧩 Search marketplace",
     "list_plugin_accounts": "🧩 Check plugin accounts",
-    "ask_question": "❓ Ask user"
+    "ask_question": "❓ Ask user",
+    "update_focus": "🎯 Update focus",
+    "update_steps": "📋 Update steps"
   },
   "labels": {
     "browser_action": "🖥️ Browser action",
@@ -47,11 +49,15 @@
     "default_session": "Current session"
   },
   "messages": {
-    "progress_guardian": "[Progress Guardian] This turn has already executed {inv_count} consecutive model invocations. Do not keep chaining tool calls indefinitely. Wrap up the current submodule at a safe boundary, update task.md (if present), output a plain-language milestone progress card in the user's language (overall progress, completed work, verification status, next milestone), and pause for user confirmation.",
-    "progress_reminder": "[Progress Reminder] You have run {interval} consecutive silent tool-calling invocations ({elapsed} elapsed; recent actions: {summary}). If you need to invoke more tools, first output one concise status sentence in visible response text (not inside thinking) in the user's language (e.g., `🧭 ...`) so the user can follow progress in real time.",
+    "progress_guardian": "[Progress Guardian] This turn has already executed {inv_count} consecutive model invocations. Do not keep chaining tool calls indefinitely. Wrap up the current submodule at a safe boundary, sync update_steps (or task.md if present), output a plain-language milestone progress card in the user's language (overall progress, completed work, verification status, next milestone), and pause for user confirmation.",
+    "progress_reminder": "[Progress Reminder] You have run {interval} consecutive silent tool-calling invocations without updating progress ({elapsed} elapsed; recent actions: {summary}). Before calling more tools, either update native progress via update_focus/update_steps or output one concise status sentence in visible response text (not inside thinking) in the user's language so the user can follow progress in real time.",
     "notify_title": "Antigravity · {project}",
     "notify_subtitle_error": "⚠️ Task paused due to error or limit",
     "notify_subtitle_done": "⏸️ Milestone ready · Review & confirm",
-    "notify_body": "{tool_count} tool calls in {elapsed}."
+    "notify_subtitle_error_steps": "⚠️ Task paused ({done}/{total} steps) · Error or limit",
+    "notify_subtitle_done_steps": "⏸️ Milestone ready ({done}/{total} steps)",
+    "notify_body": "{tool_count} tool calls in {elapsed}.",
+    "notify_body_with_step": "Completed \"{step}\" · {tool_count} tool calls in {elapsed}.",
+    "notify_body_with_active_step": "In progress: \"{step}\" · {tool_count} tool calls in {elapsed}."
   }
 }
