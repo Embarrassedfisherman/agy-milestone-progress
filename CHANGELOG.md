@@ -11,6 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.1] - 2026-11-24
+
+### Added
+- **Official Antigravity JSON Schema v1 manifest alignment**: Added `$schema` (`https://antigravity.google/schemas/v1/plugin.json`), `license`, and `keywords` to `plugin.json`, converted `repository` to a plain `https://` URL string, expanded `ALLOWED_PLUGIN_FIELDS` + `repository` URL check in `scripts/doctor.py`, and added strict schema assertions in `tests/test_repo_integrity.py`.
+- **Additional official `hooks.md` tool labels**: Added `list_permissions`, `ask_permission` (with `Target`/`Action` detail), and `generate_image` (with `ImageName`/`Prompt` detail) categories and localized labels across `en` / `zh` / `ja`.
+- Added 2 regression test suites in `tests/test_progress_hook.py` (growing the suite from 29 to **31 tests**).
+
+### Changed
+- **Official native features first (additive-only positioning)**: Refined `rules/AGENTS.md` (`3,655` B), `skills/milestone-mode/SKILL.md`, and localized `[Progress Guardian]` prompts (`en` / `zh` / `ja`) so the plugin explicitly yields to native continuous/workflow modes (`/goal`, `/teamwork`, or user-requested uninterrupted runs on native `update_steps` checklists) instead of forcing unwanted mid-run pauses.
+- Hardened `Stop` hook error classification in `hooks/progress_hook.py` with case-insensitive `terminationReason` matching and `MAX_STEPS_EXCEEDED` coverage alongside non-empty `error` detection.
+
+### Compatibility
+- Verified zero breaking incompatibilities on **Antigravity Desktop App `2.35.0`** (including official native Checklists / `update_steps` UI and unlimited conversation history), `agy` CLI `1.5.13`, and macOS `Python 3.9.6`.
+
+---
+
 ## [1.2.0] - 2026-11-23
 
 ### Added
@@ -103,7 +119,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Smart task-size threshold separating quick Q&A/minor edits from multi-module phased milestone execution.
 - Non-trivial turn completion notifications on macOS via safe `osascript` `on run argv` parameter passing.
 
-[Unreleased]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.0.3...v1.1.0

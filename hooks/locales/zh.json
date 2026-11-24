@@ -35,6 +35,9 @@
     "read_resource": "🔌 读取 MCP 资源",
     "search_marketplace": "🧩 搜索插件市场",
     "list_plugin_accounts": "🧩 检查插件账号",
+    "list_permissions": "🔐 查看权限",
+    "ask_permission": "🔐 申请权限",
+    "generate_image": "🎨 生成图片",
     "ask_question": "❓ 等待用户选择",
     "update_focus": "🎯 更新状态摘要",
     "update_steps": "📋 更新步骤清单"
@@ -49,7 +52,7 @@
     "default_session": "当前会话"
   },
   "messages": {
-    "progress_guardian": "[Progress Guardian] 本回合已连续执行 {inv_count} 轮模型调用。请不要继续无休止链式调用工具。请立即在当前安全边界收尾本子模块，同步更新 update_steps（或现有的 task.md），并用与用户一致的语言输出通俗易懂的阶段进度汇报卡片（总进度、本阶段已完成、验证情况、下一步计划），然后暂停等待用户确认。",
+    "progress_guardian": "[Progress Guardian] 本回合已连续执行 {inv_count} 轮模型调用。请先同步更新原生 update_steps 清单（或现有的 task.md）。除非用户明确要求连续跑完不暂停（如 /goal 模式），否则请在当前安全边界收尾本子模块，用与用户一致的语言输出通俗易懂的阶段进度汇报卡片（总进度、本阶段已完成、验证情况、下一步计划），然后暂停等待用户确认。",
     "progress_reminder": "[Progress Reminder] 你已连续 {interval} 轮静默调用工具且未同步进度（已耗时 {elapsed}，近期操作：{summary}）。如果接下来仍需调用工具，请先调用 update_focus / update_steps 同步进度，或在正文（非 thinking）中用用户当前语言输出一句简短进度，让用户实时看清当前进展。",
     "notify_title": "Antigravity · {project}",
     "notify_subtitle_error": "⚠️ 任务异常或达到上限已暂停",

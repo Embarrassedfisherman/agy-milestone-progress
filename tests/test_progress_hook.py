@@ -722,6 +722,75 @@ class ProgressHookTests(unittest.TestCase):
         self.assertEqual(sub_bad, "⏸️ Milestone ready · Review & confirm")
         self.assertEqual(body_bad, "1 tool calls in 20s.")
 
+    def test_permission_and_media_tool_labels_and_details(self) -> None:
+        cases = [
+            ({"name": "list_permissions", "args": {}}, "en", "permission", "🔐 List permissions"),
+            ({"name": "list_permissions", "args": {}}, "zh", "permission", "🔐 查看权限"),
+            (
+                {"name": "ask_permission", "args": {"Action": "write", "Target": "/etc/hosts"}},
+                "en",
+                "permission",
+                "🔐 Request permission `/etc/hosts`",
+            ),
+            (
+                {"name": "ask_permission", "args": {"Action": "network"}},
+                "zh",
+                "permission",
+                "🔐 申请权限 `network`",
+            ),
+            (
+                {"name": "generate_image", "args": {"ImageName": "hero_banner", "Prompt": "Minimalist icon"}},
+                "en",
+                "media",
+                "🎨 Generate image `hero_banner`",
+            ),
+            (
+                {"name": "generate_image", "args": {"Prompt": "Draw architecture diagram"}},
+                "ja",
+                "media",
+                "🎨 画像を生成 `Draw architecture diagr…`",
+            ),
+        ]
+        for tool_call, lang, expected_cat, expected_label in cases:
+            cat, label = progress_hook._describe_tool(tool_call, "", "", lang)
+            self.assertEqual(cat, expected_cat)
+            self.assertEqual(label, expected_label)
+
+    def test_progress_guardian_yields_to_native_continuous_modes_and_handles_lowercase_errors(self) -> None:
+        # 1. Verify localized Progress Guardian mentions update_steps and /goal across en/zh/ja
+        for lang, prompt in (
+            ("en", "Refactor payment module"),
+            ("zh", "重构支付模块"),
+            ("ja", "決済モジュールをリファクタリング"),
+        ):
+            conv = f"conv-guardian-{lang}"
+            self._event("SessionStart", 1700.0, conversationId=conv, lastUserInput=prompt)
+            res = {}
+            for idx in range(1, 13):
+                self._append_planner_step("ok")
+                res = self._event(
+                    "PreInvocation",
+                    1700.0 + idx,
+                    conversationId=conv,
+                    lastUserInput=prompt,
+                    invocationNum=idx,
+                )
+            self.assertEqual(len(res["injectSteps"]), 1)
+            msg = res["injectSteps"][0]["systemMessage"]["systemMessage"]
+            self.assertIn("update_steps", msg)
+            self.assertIn("/goal", msg)
+
+        # 2. Verify lowercase public-doc error termination reasons are classified as errors
+        for reason in ("error", "max_steps_exceeded"):
+            conv = f"conv-stop-{reason}"
+            self._event("SessionStart", 1800.0, conversationId=conv, lastUserInput="Run check")
+            self._event("PreInvocation", 1800.0, conversationId=conv, lastUserInput="Run check")
+            with mock.patch.object(progress_hook, "_send_desktop_notification") as notify_mock:
+                self._event("Stop", 1801.0, conversationId=conv, lastUserInput="Run check", terminationReason=reason)
+            notify_mock.assert_called_once()
+            _, subtitle, _ = notify_mock.call_args.args
+            self.assertIn("error or limit", subtitle)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -35,6 +35,9 @@
     "read_resource": "🔌 MCP リソース読込",
     "search_marketplace": "🧩 マーケットプレイス検索",
     "list_plugin_accounts": "🧩 プラグインアカウント確認",
+    "list_permissions": "🔐 権限一覧を確認",
+    "ask_permission": "🔐 権限をリクエスト",
+    "generate_image": "🎨 画像を生成",
     "ask_question": "❓ ユーザー確認",
     "update_focus": "🎯 フォーカス更新",
     "update_steps": "📋 ステップ更新"
@@ -49,7 +52,7 @@
     "default_session": "現在のセッション"
   },
   "messages": {
-    "progress_guardian": "[Progress Guardian] このターンでモデル呼び出しが連続 {inv_count} 回に達しました。ツール呼び出しを無制限に連鎖させず、安全な区切りで現在のサブモジュールを完了してください。update_steps（または既存の task.md）を更新し、ユーザーの言語で分かりやすい進捗カード（全体進捗・完了内容・検証結果・次のステップ）を出力して確認を待ってください。",
+    "progress_guardian": "[Progress Guardian] このターンでモデル呼び出しが連続 {inv_count} 回に達しました。まず update_steps（または既存の task.md）で進捗を同期してください。ユーザーが途中停止なしの連続実行（/goal など）を明示していない限り、安全な区切りで現在のサブモジュールをまとめ、ユーザーの言語で分かりやすい進捗カード（全体進捗・完了内容・検証結果・次のステップ）を出力して確認を待ってください。",
     "progress_reminder": "[Progress Reminder] 進捗の更新なしにツール呼び出しが {interval} 回連続で無言実行されています（経過 {elapsed}、最近の操作：{summary}）。続けてツールを呼び出す前に、update_focus / update_steps で進捗を更新するか、thinking ではなく通常の応答本文でユーザーの言語による簡潔な 1 行の進捗を出力してください。",
     "notify_title": "Antigravity · {project}",
     "notify_subtitle_error": "⚠️ エラーまたは上限到達により一時停止",

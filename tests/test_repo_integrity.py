@@ -26,8 +26,16 @@ class RepoIntegrityTests(unittest.TestCase):
         manifest = json.loads((ROOT_DIR / "plugin.json").read_text(encoding="utf-8"))
         unknown = set(manifest.keys()) - doctor.ALLOWED_PLUGIN_FIELDS
         self.assertEqual(unknown, set(), f"Disallowed plugin.json top-level fields: {unknown}")
+        self.assertEqual(
+            manifest.get("$schema"),
+            "https://antigravity.google/schemas/v1/plugin.json",
+        )
         self.assertEqual(manifest["name"], "milestone-progress")
         self.assertRegex(manifest["version"], r"^\d+\.\d+\.\d+$")
+        self.assertIsInstance(manifest.get("repository"), str)
+        self.assertTrue(manifest["repository"].startswith("https://"))
+        self.assertIsInstance(manifest.get("license"), str)
+        self.assertTrue(manifest["license"].strip())
 
         logo = manifest.get("logo")
         self.assertIsInstance(logo, str)

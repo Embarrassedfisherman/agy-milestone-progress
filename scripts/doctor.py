@@ -22,15 +22,20 @@ MAX_RULE_BYTES = 24_000
 WARN_RULE_BYTES = 18_000
 ALLOWED_PLUGIN_FIELDS = frozenset(
     {
+        "$schema",
         "name",
         "displayName",
         "description",
         "version",
         "logo",
         "suggestedPrompts",
+        "skills",
         "author",
         "homepage",
         "repository",
+        "license",
+        "keywords",
+        "extensions",
         "disabled",
     }
 )
@@ -223,6 +228,11 @@ def _check_manifest(repo_root: Path) -> dict[str, Any]:
         if not logo_path.exists():
             issues.append(f"declared logo not found: {logo}")
             status = "error"
+    if "repository" in data and not (
+        isinstance(data["repository"], str) and data["repository"].strip().startswith("https://")
+    ):
+        issues.append("'repository' should be an https:// URL string per AGY v1 schema")
+        status = "warn" if status == "ok" else status
 
     version = str(data.get("version") or "unknown")
     name = str(data.get("name") or "unknown")

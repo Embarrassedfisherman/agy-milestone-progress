@@ -1,8 +1,9 @@
 {
+  "$schema": "https://antigravity.google/schemas/v1/plugin.json",
   "name": "milestone-progress",
   "displayName": "Milestone Progress",
-  "version": "1.2.0",
-  "description": "Phased milestone checkpoints, silent-loop guardrails, and step-aware completion notifications engineered to pair cleanly with Antigravity's native update_focus and update_steps progress UI (multilingual).",
+  "version": "1.2.1",
+  "description": "Additive milestone checkpoints, pacing guardrails, and step-aware completion notifications built on top of Antigravity's native checklists (update_steps) and update_focus UI (multilingual).",
   "logo": "assets/logo.svg",
   "suggestedPrompts": [
     "Use /milestone-mode to plan and build this feature step by step",
@@ -14,8 +15,13 @@
     "url": "https://github.com/Embarrassedfisherman"
   },
   "homepage": "https://github.com/Embarrassedfisherman/agy-milestone-progress",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Embarrassedfisherman/agy-milestone-progress"
-  }
+  "repository": "https://github.com/Embarrassedfisherman/agy-milestone-progress",
+  "license": "MIT",
+  "keywords": [
+    "milestone",
+    "progress",
+    "checklists",
+    "checkpoints",
+    "notifications"
+  ]
 }

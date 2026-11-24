@@ -10,6 +10,22 @@
 
 ---
 
+## [1.2.1] - 2026-11-24
+
+### 新增
+- **对齐 Antigravity 官方 JSON Schema v1 清单规范**：为 `plugin.json` 添加 `$schema`（`https://antigravity.google/schemas/v1/plugin.json`）、`license` 与 `keywords`，并将 `repository` 规范为纯 `https://` URL 字符串；同步扩展 `scripts/doctor.py` 的 `ALLOWED_PLUGIN_FIELDS` 与 `repository` 字符串校验，并在 `tests/test_repo_integrity.py` 中加入严格 Schema 断言。
+- **补齐官方 `hooks.md` 其余原生工具标签**：在 `hooks/progress_hook.py` 与 `en` / `zh` / `ja` 三语词典中新增 `list_permissions`、`ask_permission`（提取 `Target`/`Action`）与 `generate_image`（提取 `ImageName`/`Prompt`）分类与本地化标签。
+- 在 `tests/test_progress_hook.py` 新增 2 组回归测试（全量测试扩充至 **31 项**）。
+
+### 变更
+- **确立“官方原生优先、只做加法与补充”协同原则**：优化 `rules/AGENTS.md`（`3,655` 字节）、`skills/milestone-mode/SKILL.md` 与三语 `[Progress Guardian]` 守护文案，当用户使用 `/goal`、`/teamwork` 或明确要求连续跑完不暂停时主动退让给 AGY 原生 Checklists（`update_steps`）与 `update_focus`，不强行中途刹车。
+- 加固 `hooks/progress_hook.py` 的 `Stop` 异常终止判定：支持 `terminationReason` 大小写不敏感匹配并纳入 `MAX_STEPS_EXCEEDED`。
+
+### 兼容性
+- 完成 **Antigravity 桌面端 `2.35.0`**（含官方原生 Checklists / `update_steps` 与无限本地会话历史）、`agy` CLI `1.5.13` 及 macOS `Python 3.9.6` 的全量兼容验收（零破坏性变更）。
+
+---
+
 ## [1.2.0] - 2026-11-23
 
 ### 新增
@@ -102,7 +118,8 @@
 - 实现任务复杂度智能阈值分流（短问答直出，多模块任务自动进入分阶段里程碑暂停模式）。
 - 实现 macOS 非平凡回合完成桌面通知（采用 `osascript` `on run argv` 安全传参，短对话零打扰）。
 
-[Unreleased]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.0.3...v1.1.0

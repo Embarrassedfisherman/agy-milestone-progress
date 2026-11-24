@@ -16,7 +16,7 @@ and append a new row to the verification log below (plus any discovered regressi
 
 | Layer | Minimum / Supported | Notes |
 | :--- | :--- | :--- |
-| **Antigravity Desktop App** | `2.x` (latest verified: `2.34.0`) | Full support for Rules, Skills, Lifecycle Hooks, Auxiliary Pane Artifacts |
+| **Antigravity Desktop App** | `2.x` (latest verified: `2.35.0`) | Full support for Rules, Skills, Lifecycle Hooks, native Checklists (`update_steps`), Auxiliary Pane Artifacts |
 | **Antigravity CLI (`agy`)** | `1.5.x` (latest verified: `1.5.13`) | Used for `agy plugin list`, `agy plugin enable/disable`, `agy plugin validate --strict` |
 | **Python** | `3.9+` (tested: `3.9.6` on stock macOS) | Zero third-party dependencies (standard library only). Keep strict `3.9` runtime syntax compatibility (`from __future__ import annotations`, avoid runtime `int \| str` or `match/case`). |
 | **macOS** | Full support | Includes native desktop notifications via `osascript` (`on run argv`) and `fcntl.flock` locking |
@@ -29,6 +29,7 @@ and append a new row to the verification log below (plus any discovered regressi
 
 | Date | Plugin Ver | AGY App | `agy` CLI | OS / Arch | Python | `agy plugin validate --strict` | Hook Live Verified | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 2026-11-24 | `1.2.1` | `2.35.0` | `1.5.13` | macOS (Darwin arm64) | `3.9.6` | Pass (`0 err / 0 warn / 0 notes`) | Yes (31/31 local tests + live session verified) | ✅ Compatible | Official Schema v1 manifest (`$schema`, string `repository`, `license`, `keywords`), native-first yield for `/goal` & official Checklists, `list_permissions`/`ask_permission`/`generate_image` labels, `3,655` B `AGENTS.md`. |
 | 2026-11-23 | `1.2.0` | `2.34.0` | `1.5.13` | macOS (Darwin arm64) | `3.9.6` | Pass (`0 err / 0 warn / 0 notes`) | Yes (29/29 local tests + synced live) | ✅ Compatible | Native `update_focus`/`update_steps` synergy, silence-nudge exemption (`BUG-012`), step-aware notifications, ~29% leaner `AGENTS.md` (`3,023` B). |
 | 2026-11-22 | `1.1.1` | `2.34.0` | `1.5.13` | macOS / Ubuntu / Windows | `3.9`–`3.13` | Pass (`0 err / 0 warn / 0 notes`) | Yes (26/26 tests + 15/15 CI green) | ✅ Compatible | Added Windows `msvcrt` locking (`BUG-010`) and UTF-8 stdio hardening (`BUG-011`); CI run `44973380299` 15/15 green. |
 | 2026-11-22 | `1.1.0` | `2.34.0` | `1.5.13` | macOS (Darwin arm64) | `3.9.6` | Pass (`0 err / 0 warn / 0 notes`) | Yes (25/25 tests + zip validated) | ✅ Compatible | Multilingual i18n, persistent `config.json`, SVG logo, AGY 2.34 tools & `Stop` error hardening verified. |
@@ -40,19 +41,19 @@ and append a new row to the verification log below (plus any discovered regressi
 
 ## 3. Antigravity Hook & Plugin Contract Checklist
 
-Checked against built-in Antigravity customization docs (`agy-customizations` & `plugin` skills) on **2026-11-23** (App `2.34.0` / CLI `1.5.13`):
+Checked against built-in Antigravity customization docs (`agy-customizations` & `plugin` skills) and official online JSON Schema v1 (`https://antigravity.google/schemas/v1/plugin.json`) on **2026-11-24** (App `2.35.0` / CLI `1.5.13`):
 
-| Contract Surface | Expected Behavior | Status on AGY `2.34.0` |
+| Contract Surface | Expected Behavior | Status on AGY `2.35.0` |
 | :--- | :--- | :--- |
-| Plugin root manifest | `plugin.json` at plugin root; allowed top-level fields: `name`, `displayName`, `description`, `version`, `logo`, `suggestedPrompts`, `author`, `homepage`, `repository`, `disabled` | ✅ Confirmed (`0` findings on `--strict`) |
+| Plugin root manifest | `plugin.json` at plugin root; aligns with official Schema v1 (`$schema`, `name`, `displayName`, `description`, `version`, `logo`, `suggestedPrompts`, `author`, `homepage`, string `repository`, `license`, `keywords`, etc.) | ✅ Confirmed (`0` findings on `--strict` & `0` Schema v1 mismatches) |
 | Hooks manifest location | `hooks.json` directly at plugin root (native plugins do not stage `hooks/hooks.json`) | ✅ Confirmed |
 | Hook env variables | `PLUGIN_ROOT` and `PLUGIN_DATA` injected into hook subprocesses | ✅ Confirmed (`~/.gemini/antigravity/plugin_data/milestone-progress`) |
 | Events used | `SessionStart` (flat), `PostToolUse` (grouped with `matcher` + `hooks`), `PreInvocation` (flat), `Stop` (flat) | ✅ Confirmed |
 | `PreInvocation` return | `{"injectSteps": [{"systemMessage": {"systemMessage": "..."}}]}` (metadata-free) | ✅ Confirmed |
-| `Stop` input / return | Includes `terminationReason`, `error`, `fullyIdle`, `continuationActive`; returns `{"decision": "allow"}` | ✅ Confirmed (`v1.1.0` inspects `payload["error"]`, `BUG-007`) |
-| Rules budget & cap | `rules/AGENTS.md` plain Markdown (no frontmatter), `< 24,000` bytes per file, shared `20,000`-token global rules budget | ✅ Confirmed (`3,023` bytes / `~3.0 KB`, trimmed ~29% in `v1.2.0`) |
-| `transcript.jsonl` format | JSONL records with `"type": "PLANNER_RESPONSE"` and visible text in `"content"` | ✅ Confirmed in live session |
-| Native tool names (`PostToolUse`) | AGY `2.34` tools including `update_focus`, `update_steps`, `manage_task`, `manage_subagents`, `define_subagent`, `schedule`, `call_mcp_tool`, etc. | ✅ Confirmed (`v1.1.0` `BUG-006`; `v1.2.0` adds `update_focus` / `update_steps` synergy & step-aware notifications, `BUG-012`) |
+| `Stop` input / return | Includes `terminationReason`, `error`, `fullyIdle`, `continuationActive`; returns `{"decision": "allow"}` | ✅ Confirmed (`v1.2.1` adds case-insensitive matching & `MAX_STEPS_EXCEEDED`) |
+| Rules budget & cap | `rules/AGENTS.md` plain Markdown (no frontmatter), `< 24,000` bytes per file, shared `20,000`-token global rules budget | ✅ Confirmed (`3,655` bytes / `~3.6 KB`) |
+| `transcript.jsonl` format | JSONL records with `"type": "PLANNER_RESPONSE"` and visible text in `"content"` | ✅ Confirmed in live `2.35.0` session |
+| Native tool names (`PostToolUse`) | AGY `2.35` tools including `update_focus`, `update_steps` (official Checklists), `manage_task`, `manage_subagents`, `define_subagent`, `schedule`, `call_mcp_tool`, `list_permissions`, `ask_permission`, `generate_image`, etc. | ✅ Confirmed (`v1.2.1` covers full official `hooks.md` tool set & yields cleanly to `/goal` / continuous checklists) |
 
 ---
 

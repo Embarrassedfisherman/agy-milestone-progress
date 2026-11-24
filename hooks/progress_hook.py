@@ -51,6 +51,7 @@ ERROR_TERMINATION_REASONS = frozenset(
         "MAX_INVOCATIONS",
         "MAX_FORCED_INVOCATIONS",
         "MAX_TOKEN_BUDGET_EXCEEDED",
+        "MAX_STEPS_EXCEEDED",
     }
 )
 
@@ -86,6 +87,9 @@ TOOL_CATEGORIES: dict[str, str] = {
     "read_resource": "mcp",
     "search_marketplace": "plugin",
     "list_plugin_accounts": "plugin",
+    "list_permissions": "permission",
+    "ask_permission": "permission",
+    "generate_image": "media",
     "ask_question": "ui",
     "update_focus": "progress",
     "update_steps": "progress",
@@ -506,6 +510,14 @@ def _describe_tool(
         queries = args.get("queries")
         if isinstance(queries, list) and queries and isinstance(queries[0], str) and queries[0].strip():
             detail = f" `{_short_text(queries[0], 24)}`"
+    elif name == "ask_permission":
+        perm_target = args.get("Target") or args.get("Action") or ""
+        if isinstance(perm_target, str) and perm_target.strip():
+            detail = f" `{_short_text(perm_target, 24)}`"
+    elif name == "generate_image":
+        image_ref = args.get("ImageName") or args.get("Prompt") or ""
+        if isinstance(image_ref, str) and image_ref.strip():
+            detail = f" `{_short_text(image_ref, 24)}`"
     elif name == "update_focus":
         focus = args.get("focus") or ""
         if isinstance(focus, str) and focus.strip():
@@ -874,10 +886,11 @@ def _handle_stop(payload: dict[str, Any], now: float, cfg: dict[str, Any]) -> di
         reset_state["lang"] = lang
         _save_state(conv_id, reset_state)
 
-    reason = str(payload.get("terminationReason") or "")
+    reason = str(payload.get("terminationReason") or "").strip()
+    reason_upper = reason.upper()
     error_text = str(payload.get("error") or "").strip()
 
-    is_error = bool(error_text) or reason in ERROR_TERMINATION_REASONS
+    is_error = bool(error_text) or reason_upper in ERROR_TERMINATION_REASONS
     is_nontrivial = (
         inv_count >= int(cfg["notify_min_invocations"])
         or tool_count >= int(cfg["notify_min_tools"])
@@ -885,7 +898,7 @@ def _handle_stop(payload: dict[str, Any], now: float, cfg: dict[str, Any]) -> di
         or is_error
     )
 
-    if cfg.get("notify_enabled", True) and is_nontrivial and reason != "USER_CANCELED":
+    if cfg.get("notify_enabled", True) and is_nontrivial and reason_upper != "USER_CANCELED":
         cwd = str(payload.get("cwd") or "")
         default_session = i18n.get_text(lang, "labels", "default_session", default="Current session")
         project_name = os.path.basename(cwd.rstrip("/\\")) if cwd else default_session
