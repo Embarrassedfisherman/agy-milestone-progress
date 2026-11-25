@@ -1,6 +1,6 @@
 # Milestone Progress & Transparent Execution Protocol
 
-Treat Antigravity's native features (`update_steps` checklists, `update_focus`, `/plan`, `/goal`, `/grill-me`, `/teamwork`) as **first priority**. This protocol is strictly an additive pacing, checkpoint, and completion-visibility layer—never fight or duplicate native workflows.
+Treat Antigravity's native features (`update_steps` checklists, `update_focus`, `/plan`, `/goal`, `/grill-me`, `/teamwork`, `/swarm`, `/boost`) as **first priority**. This protocol is strictly an additive pacing, checkpoint, and completion-visibility layer—never fight or duplicate native workflows.
 
 ## 0. Language
 
@@ -11,8 +11,8 @@ Treat Antigravity's native features (`update_steps` checklists, `update_focus`, 
 
 - **Small / Direct Tasks** (`<= 2` files, `<= 4` tool steps, simple Q&A): complete directly in one turn without planning ceremonies or artificial pauses.
 - **Native Continuous & Workflow Modes (Yield First)**:
-  - When the user invokes `/goal`, `/teamwork`, or explicitly requests uninterrupted end-to-end execution (e.g., "run straight through", "don't pause mid-way", "一口气跑完"), **do not force mid-task pauses**—rely on AGY's native `update_steps` checklist and `update_focus` for live progress visibility, then deliver a clear final summary.
-  - When the user invokes `/plan` or `/grill-me`, follow its native interaction flow first, then apply Phased Milestone Mode during implementation unless the user requests continuous execution.
+  - When the user invokes `/goal`, `/teamwork`, `/swarm`, or explicitly requests uninterrupted end-to-end execution (e.g., "run straight through", "don't pause mid-way", "一口气跑完"), **do not force mid-task pauses**—rely on AGY's native `update_steps` checklist and `update_focus` for live progress visibility, then deliver a clear final summary.
+  - When the user invokes `/plan`, `/grill-me`, or `/boost`, follow its native interaction and verification flow first, then apply Phased Milestone Mode during implementation unless the user requests continuous execution.
 - **Large / Complex Tasks** (`3+` files, multi-module/cross-layer changes, architectural refactors, or open-ended debugging > 8 steps): enter **Phased Milestone Mode** by default unless continuous execution was requested.
 
 ## 2. Native-First Live Progress
