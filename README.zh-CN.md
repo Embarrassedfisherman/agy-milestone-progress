@@ -2,12 +2,32 @@
 
 [English](./README.md) | **简体中文**
 
+[![Status: Archived](https://img.shields.io/badge/Status-Archived-6B7280.svg)](#项目已光荣归档推荐全面回归-antigravity-原生能力)
 [![CI](https://github.com/Embarrassedfisherman/agy-milestone-progress/actions/workflows/ci.yml/badge.svg)](https://github.com/Embarrassedfisherman/agy-milestone-progress/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB.svg)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/Version-1.2.1-10B981.svg)](./CHANGELOG.zh-CN.md)
+[![Version](https://img.shields.io/badge/Final%20Version-1.2.1-10B981.svg)](./CHANGELOG.zh-CN.md)
 
-面向 **Google Antigravity（AGY）** 的**原生优先、增量增强型**分阶段里程碑控场与桌面通知插件（当前版本：`v1.2.1`）。本插件以 AGY 官方原生能力（Checklists / `update_steps`、`update_focus`、`/plan`、`/goal`）为第一优先级，仅在其上做加法与补充，并原生支持**多语言自动适配**（规则层自动跟随任意对话语言，Hook 内置 `en` / `zh` / `ja` 语言包并支持轻松扩展）。
+> [!NOTE]
+> ### 项目已光荣归档：推荐全面回归 Antigravity 原生能力
+>
+> **归档日期：2026-11-28（终版验证：`v1.2.1` on Antigravity `2.36.0`）**
+>
+> 本项目已圆满完成历史使命并转为只读归档。随着 Antigravity 客户端（`2.34`–`2.36`）密集演进，官方已原生补齐核心进度可视化、步骤清单、规划工作流与桌面提醒能力；回归原生可免除每次工具调用的同步 Hook 进程开销与常驻规则上下文占用。
+>
+> | 原插件能力 | 推荐使用的 Antigravity 原生能力 |
+> | :--- | :--- |
+> | 折叠态实时进展与步骤播报 | 原生 `update_focus` + `update_steps` 步骤完成摘要 |
+> | 任务进度清单（`task.md`） | 官方原生 **Checklists**（`update_steps`） |
+> | 先出方案确认与需求对齐 | 内置 `/plan` 与 `/grill-me` 命令 |
+> | 长程执行与多 Agent 协作 | 内置 `/goal`、`/teamwork`、`/swarm`、`/boost` 及 `2.36.0` 自动续跑 |
+> | 切窗完成系统通知 | 客户端原生 **Settings → Notifications** |
+>
+> 本仓库将永久保留作为 **Antigravity Lifecycle Hooks**、跨平台 Python (`3.9+`) 文件锁（`fcntl` / `msvcrt`）、多语言一致性测试与 `agy plugin validate --strict` 工程化打包的开源参考范本（详见 [docs/RETROSPECTIVE.md](./docs/RETROSPECTIVE.md) 与 [docs/BUG_LOG.md](./docs/BUG_LOG.md)）。
+
+---
+
+面向 **Google Antigravity（AGY）** 的**原生优先、增量增强型**分阶段里程碑控场与桌面通知插件（终版：`v1.2.1`）。本插件以 AGY 官方原生能力（Checklists / `update_steps`、`update_focus`、`/plan`、`/goal`）为第一优先级，仅在其上做加法与补充，并原生支持**多语言自动适配**（规则层自动跟随任意对话语言，Hook 内置 `en` / `zh` / `ja` 语言包并支持轻松扩展）。
 
 用于解决大型项目任务中「黑盒思考很久、缺少阶段验收刹车与切窗完成提醒」的核心痛点，同时在用户使用 `/goal` 或明确要求连续跑完时自动退让给官方原生 Checklists，不强行中断。
 
@@ -16,7 +36,7 @@
 ## 1. 快速开始（安装与升级）
 
 ### 环境要求
-- **Antigravity 2.x**（已实测桌面端 `2.35.0` & `agy` CLI `1.5.13`，详见 [兼容性矩阵](./docs/COMPATIBILITY.md)）
+- **Antigravity 2.x**（终版已实测桌面端 `2.36.0` & `agy` CLI `1.5.13`，详见 [兼容性矩阵](./docs/COMPATIBILITY.md)）
 - **Python 3.9+**（仅使用标准库，零第三方依赖，直接兼容 macOS 自带 `python3`）
 - **操作系统**：
   - **macOS**：完整支持（含 `osascript` 系统桌面通知）

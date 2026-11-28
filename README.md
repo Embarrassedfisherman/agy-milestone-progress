@@ -2,10 +2,30 @@
 
 **English** | [简体中文](./README.zh-CN.md)
 
+[![Status: Archived](https://img.shields.io/badge/Status-Archived-6B7280.svg)](#project-archived--migrating-to-native-antigravity)
 [![CI](https://github.com/Embarrassedfisherman/agy-milestone-progress/actions/workflows/ci.yml/badge.svg)](https://github.com/Embarrassedfisherman/agy-milestone-progress/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB.svg)](https://www.python.org/)
-[![Version](https://img.shields.io/badge/Version-1.2.1-10B981.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Final%20Version-1.2.1-10B981.svg)](./CHANGELOG.md)
+
+> [!NOTE]
+> ### Project Archived — Migrating to Native Antigravity
+>
+> **Archived on 2026-11-28 (final verified release: `v1.2.1` on Antigravity `2.36.0`).**
+>
+> This project has honorably completed its mission. Recent Antigravity releases (`2.34`–`2.36`) now natively cover the core visibility, checklist, workflow, and notification gaps this plugin was originally built to solve—without paying synchronous hook subprocess latency or extra rules-context overhead.
+>
+> | Former Plugin Capability | Recommended Native Antigravity Replacement |
+> | :--- | :--- |
+> | Live collapsed progress & narration | Native `update_focus` + `update_steps` step summaries |
+> | Task checklist tracking (`task.md`) | Official native **Checklists** (`update_steps`) |
+> | Plan-first confirmation & scoping | Built-in `/plan` and `/grill-me` slash commands |
+> | Long-horizon / multi-agent execution | Built-in `/goal`, `/teamwork`, `/swarm`, `/boost`, and `2.36.0` Auto-Resume |
+> | Task-completion desktop alerts | Native **Settings → Notifications** |
+>
+> This repository remains public and read-only as a reference implementation for **Antigravity Lifecycle Hooks**, cross-platform Python (`3.9+`) file locking (`fcntl` / `msvcrt`), i18n locale testing, and `agy plugin validate --strict` packaging (see [docs/RETROSPECTIVE.md](./docs/RETROSPECTIVE.md) and [docs/BUG_LOG.md](./docs/BUG_LOG.md)).
+
+---
 
 A global **Antigravity (AGY)** plugin designed as a strictly **additive, native-first** layer on top of Antigravity's official progress UI (Checklists / `update_steps`, `update_focus`, `/plan`, `/goal`)—adding **phased milestone checkpoints, one-milestone-per-turn pacing, silent-loop guardrails, and step-aware desktop notifications**, with built-in **multilingual support** (`en`, `zh`, `ja`, and auto-adaptive rules for any conversation language).
 
@@ -16,7 +36,7 @@ It solves a common pain point on large projects: sending a prompt and watching t
 ## 1. Quick Start
 
 ### Requirements
-- **Antigravity 2.x** (verified on Desktop App `2.35.0` & `agy` CLI `1.5.13`; see [Compatibility Matrix](./docs/COMPATIBILITY.md))
+- **Antigravity 2.x** (final verification: Desktop App `2.36.0` & `agy` CLI `1.5.13`; see [Compatibility Matrix](./docs/COMPATIBILITY.md))
 - **Python 3.9+** (standard library only, zero third-party dependencies — works out-of-the-box with stock macOS `python3`)
 - **OS**:
   - **macOS**: Full support including native desktop notifications (`osascript`)

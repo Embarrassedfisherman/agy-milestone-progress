@@ -7,7 +7,11 @@ All notable changes to **Milestone Progress (`milestone-progress`)** are documen
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Archived] - 2026-11-28
+
+### Status
+- **Project honorably archived (read-only)**: Antigravity `2.34`–`2.36` now natively covers the core progress visibility (`update_focus` / `update_steps` Checklists), workflow commands (`/plan`, `/grill-me`, `/goal`, `/teamwork`, `/swarm`, `/boost`), and desktop notifications that motivated this plugin.
+- Added bilingual archive/migration notices to `README.md` and `README.zh-CN.md`, and recorded final compatibility verification on **Antigravity Desktop App `2.36.0`** (`agy` CLI `1.5.13`, `Python 3.9.6`) in `docs/COMPATIBILITY.md`.
 
 ---
 
@@ -119,7 +123,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Smart task-size threshold separating quick Q&A/minor edits from multi-module phased milestone execution.
 - Non-trivial turn completion notifications on macOS via safe `osascript` `on run argv` parameter passing.
 
-[Unreleased]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.2.1...HEAD
+[Archived]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.2.1...HEAD
 [1.2.1]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.0...v1.1.1

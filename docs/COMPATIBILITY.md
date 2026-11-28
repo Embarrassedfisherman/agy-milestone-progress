@@ -16,7 +16,7 @@ and append a new row to the verification log below (plus any discovered regressi
 
 | Layer | Minimum / Supported | Notes |
 | :--- | :--- | :--- |
-| **Antigravity Desktop App** | `2.x` (latest verified: `2.35.1`) | Full support for Rules, Skills, Lifecycle Hooks, native Checklists (`update_steps`), Auxiliary Pane Artifacts |
+| **Antigravity Desktop App** | `2.x` (final verified: `2.36.0`) | Full support for Rules, Skills, Lifecycle Hooks, native Checklists (`update_steps`), Auxiliary Pane Artifacts (repository archived on 2026-11-28 as native AGY capabilities matured) |
 | **Antigravity CLI (`agy`)** | `1.5.x` (latest verified: `1.5.13`) | Used for `agy plugin list`, `agy plugin enable/disable`, `agy plugin validate --strict` |
 | **Python** | `3.9+` (tested: `3.9.6` on stock macOS) | Zero third-party dependencies (standard library only). Keep strict `3.9` runtime syntax compatibility (`from __future__ import annotations`, avoid runtime `int \| str` or `match/case`). |
 | **macOS** | Full support | Includes native desktop notifications via `osascript` (`on run argv`) and `fcntl.flock` locking |
@@ -29,6 +29,7 @@ and append a new row to the verification log below (plus any discovered regressi
 
 | Date | Plugin Ver | AGY App | `agy` CLI | OS / Arch | Python | `agy plugin validate --strict` | Hook Live Verified | Status | Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 2026-11-28 | `1.2.1` | `2.36.0` | `1.5.13` | macOS (Darwin arm64) | `3.9.6` | Pass (`0 err / 0 warn / 0 notes`) | Yes (31/31 local tests + live session verified) | ✅ Compatible (Final / Archived) | Zero breaking changes on AGY `2.36.0` (including Auto-Resume); verified live `PLUGIN_DATA` state, `update_focus` silence exemption, 21/21 native tool coverage, and `3,713` B `AGENTS.md`. Repository archived to return to native AGY capabilities. |
 | 2026-11-25 | `1.2.1` | `2.35.1` | `1.5.13` | macOS (Darwin arm64) | `3.9.6` | Pass (`0 err / 0 warn / 0 notes`) | Yes (31/31 local tests + live session verified) | ✅ Compatible | Zero breaking changes on AGY `2.35.1`; verified live `PLUGIN_DATA` hook state, `update_focus` silence-nudge exemption, 21/21 native tool coverage, and aligned `/swarm` & `/boost` native-yield wording in `rules/AGENTS.md` (`3,713` B). |
 | 2026-11-24 | `1.2.1` | `2.35.0` | `1.5.13` | macOS (Darwin arm64) | `3.9.6` | Pass (`0 err / 0 warn / 0 notes`) | Yes (31/31 local tests + live session verified) | ✅ Compatible | Official Schema v1 manifest (`$schema`, string `repository`, `license`, `keywords`), native-first yield for `/goal` & official Checklists, `list_permissions`/`ask_permission`/`generate_image` labels, `3,655` B `AGENTS.md`. |
 | 2026-11-23 | `1.2.0` | `2.34.0` | `1.5.13` | macOS (Darwin arm64) | `3.9.6` | Pass (`0 err / 0 warn / 0 notes`) | Yes (29/29 local tests + synced live) | ✅ Compatible | Native `update_focus`/`update_steps` synergy, silence-nudge exemption (`BUG-012`), step-aware notifications, ~29% leaner `AGENTS.md` (`3,023` B). |
@@ -42,9 +43,9 @@ and append a new row to the verification log below (plus any discovered regressi
 
 ## 3. Antigravity Hook & Plugin Contract Checklist
 
-Checked against built-in Antigravity customization docs (`agy-customizations` & `plugin` skills) and official online JSON Schema v1 (`https://antigravity.google/schemas/v1/plugin.json`) on **2026-11-25** (App `2.35.1` / CLI `1.5.13`):
+Checked against built-in Antigravity customization docs (`agy-customizations` & `plugin` skills) and official online JSON Schema v1 (`https://antigravity.google/schemas/v1/plugin.json`) on **2026-11-28** (App `2.36.0` / CLI `1.5.13` — final pre-archive check):
 
-| Contract Surface | Expected Behavior | Status on AGY `2.35.1` |
+| Contract Surface | Expected Behavior | Status on AGY `2.36.0` |
 | :--- | :--- | :--- |
 | Plugin root manifest | `plugin.json` at plugin root; aligns with official Schema v1 (`$schema`, `name`, `displayName`, `description`, `version`, `logo`, `suggestedPrompts`, `author`, `homepage`, string `repository`, `license`, `keywords`, etc.) | ✅ Confirmed (`0` findings on `--strict` & `0` Schema v1 mismatches) |
 | Hooks manifest location | `hooks.json` directly at plugin root (native plugins do not stage `hooks/hooks.json`) | ✅ Confirmed |
@@ -53,8 +54,8 @@ Checked against built-in Antigravity customization docs (`agy-customizations` & 
 | `PreInvocation` return | `{"injectSteps": [{"systemMessage": {"systemMessage": "..."}}]}` (metadata-free) | ✅ Confirmed |
 | `Stop` input / return | Includes `terminationReason`, `error`, `fullyIdle`, `continuationActive`; returns `{"decision": "allow"}` | ✅ Confirmed (`v1.2.1` adds case-insensitive matching & `MAX_STEPS_EXCEEDED`) |
 | Rules budget & cap | `rules/AGENTS.md` plain Markdown (no frontmatter), `< 24,000` bytes per file, shared `20,000`-token global rules budget | ✅ Confirmed (`3,713` bytes / `~3.7 KB`) |
-| `transcript.jsonl` format | JSONL records with `"type": "PLANNER_RESPONSE"` and visible text in `"content"` | ✅ Confirmed in live `2.35.1` session |
-| Native tool names (`PostToolUse`) | AGY `2.35` tools including `update_focus`, `update_steps` (official Checklists), `manage_task`, `manage_subagents`, `define_subagent`, `swarm`, `run_workflow`, `schedule`, `call_mcp_tool`, `list_permissions`, `ask_permission`, `generate_image`, etc. | ✅ Confirmed (21/21 live `2.35.1` native tools covered; yields cleanly to `/goal`, `/teamwork`, `/swarm`, `/boost`, and official Checklists) |
+| `transcript.jsonl` format | JSONL records with `"type": "PLANNER_RESPONSE"` and visible text in `"content"` | ✅ Confirmed in live `2.36.0` session |
+| Native tool names (`PostToolUse`) | AGY `2.36` tools including `update_focus`, `update_steps` (official Checklists), `manage_task`, `manage_subagents`, `define_subagent`, `swarm`, `run_workflow`, `schedule`, `call_mcp_tool`, `list_permissions`, `ask_permission`, `generate_image`, etc. | ✅ Confirmed (21/21 live `2.36.0` native tools covered; yields cleanly to `/goal`, `/teamwork`, `/swarm`, `/boost`, and official Checklists) |
 
 ---
 

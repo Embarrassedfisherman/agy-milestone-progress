@@ -6,7 +6,11 @@
 
 格式遵循 [Keep a Changelog 1.1.0](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本 2.0.0（SemVer）](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased]
+## [已归档 / Archived] - 2026-11-28
+
+### 状态
+- **项目正式光荣归档（只读）**：Antigravity `2.34`–`2.36` 已原生补齐本插件初衷所解决的核心进度可视化（`update_focus` / `update_steps` Checklists）、规划与协作命令（`/plan`、`/grill-me`、`/goal`、`/teamwork`、`/swarm`、`/boost`）及桌面通知能力，推荐全面回归原生。
+- 在 `README.md` 与 `README.zh-CN.md` 顶部补充双语归档公告与原生迁移对照表，并在 `docs/COMPATIBILITY.md` 补录最终 **Antigravity 桌面端 `2.36.0`**（`agy` CLI `1.5.13` / `Python 3.9.6`）兼容验证记录。
 
 ---
 
@@ -118,7 +122,7 @@
 - 实现任务复杂度智能阈值分流（短问答直出，多模块任务自动进入分阶段里程碑暂停模式）。
 - 实现 macOS 非平凡回合完成桌面通知（采用 `osascript` `on run argv` 安全传参，短对话零打扰）。
 
-[Unreleased]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.2.1...HEAD
+[已归档 / Archived]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.2.1...HEAD
 [1.2.1]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/Embarrassedfisherman/agy-milestone-progress/compare/v1.1.0...v1.1.1
